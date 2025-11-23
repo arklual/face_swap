@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     COMFY_BASE_URL: str = "http://127.0.0.1:8188"
     IPADAPTER_STRENGTH_SCALE: float = 1.0
 
+    JWT_SECRET_KEY: str = "8KRTRfzwYFFr1I974x6BtWsZSULD9t416UKKkJZGd7DJ3AAtTpQbsf3z1h877joQ"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7
+
     class Config:
         env_file = ".env"
 
