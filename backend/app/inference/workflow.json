@@ -1,0 +1,410 @@
+{
+  "3": {
+    "inputs": {
+      "seed": 1079996701404482,
+      "steps": 30,
+      "cfg": 5,
+      "sampler_name": "euler",
+      "scheduler": "beta",
+      "denoise": 0.55,
+      "model": [
+        "61",
+        0
+      ],
+      "positive": [
+        "51",
+        0
+      ],
+      "negative": [
+        "51",
+        1
+      ],
+      "latent_image": [
+        "18",
+        2
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "4": {
+    "inputs": {
+      "ckpt_name": "dreamshaper_8.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Load Checkpoint"
+    }
+  },
+  "6": {
+    "inputs": {
+      "text": "natural facial proportions, lively gaze, soft lighting, natural volume shades, girl 10 years old, blond straight hair, blue eyes",
+      "clip": [
+        "4",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "3",
+        0
+      ],
+      "vae": [
+        "4",
+        2
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "65",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "10": {
+    "inputs": {
+      "image": "illustr_3_1.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "16": {
+    "inputs": {
+      "kernel_size": 10,
+      "sigma": 8,
+      "mask": [
+        "148",
+        0
+      ]
+    },
+    "class_type": "ImpactGaussianBlurMask",
+    "_meta": {
+      "title": "Gaussian Blur Mask"
+    }
+  },
+  "18": {
+    "inputs": {
+      "noise_mask": true,
+      "positive": [
+        "6",
+        0
+      ],
+      "negative": [
+        "19",
+        0
+      ],
+      "vae": [
+        "4",
+        2
+      ],
+      "pixels": [
+        "10",
+        0
+      ],
+      "mask": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "InpaintModelConditioning",
+    "_meta": {
+      "title": "InpaintModelConditioning"
+    }
+  },
+  "19": {
+    "inputs": {
+      "text": "plastic skin, deformed, cross-eyed, mismatched pupils, crooked teeth, bruises under the eyes, red nose, pink nose, extra teeth, oversized eyes, long neck, strabismus, big teeth, makeup, different color eyes, heterochromia, mismatched eyes, squint , misaligned eyes, diverse eyes",
+      "clip": [
+        "4",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "28": {
+    "inputs": {
+      "detect_hand": "disable",
+      "detect_body": "enable",
+      "detect_face": "enable",
+      "resolution": 640,
+      "bbox_detector": "yolo_nas_m_fp16.onnx",
+      "pose_estimator": "dw-ll_ucoco_384_bs5.torchscript.pt",
+      "scale_stick_for_xinsr_cn": "disable",
+      "image": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "DWPreprocessor",
+    "_meta": {
+      "title": "DWPose Estimator"
+    }
+  },
+  "31": {
+    "inputs": {
+      "cnet": "control_v11p_sd15_lineart.pth"
+    },
+    "class_type": "ACN_ControlNetLoaderAdvanced",
+    "_meta": {
+      "title": "Load Advanced ControlNet Model 🛂🅐🅒🅝"
+    }
+  },
+  "32": {
+    "inputs": {
+      "strength": 0.31,
+      "start_percent": 0,
+      "end_percent": 1,
+      "positive": [
+        "18",
+        0
+      ],
+      "negative": [
+        "18",
+        1
+      ],
+      "control_net": [
+        "31",
+        0
+      ],
+      "image": [
+        "28",
+        0
+      ],
+      "vae": [
+        "4",
+        2
+      ]
+    },
+    "class_type": "ControlNetApplyAdvanced",
+    "_meta": {
+      "title": "Apply ControlNet"
+    }
+  },
+  "48": {
+    "inputs": {
+      "safe": "enable",
+      "resolution": 512,
+      "image": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "PiDiNetPreprocessor",
+    "_meta": {
+      "title": "PiDiNet Soft-Edge Lines"
+    }
+  },
+  "51": {
+    "inputs": {
+      "strength": 0.3,
+      "start_percent": 0,
+      "end_percent": 1,
+      "positive": [
+        "32",
+        0
+      ],
+      "negative": [
+        "32",
+        1
+      ],
+      "control_net": [
+        "58",
+        0
+      ],
+      "image": [
+        "48",
+        0
+      ],
+      "vae": [
+        "4",
+        2
+      ]
+    },
+    "class_type": "ControlNetApplyAdvanced",
+    "_meta": {
+      "title": "Apply ControlNet"
+    }
+  },
+  "58": {
+    "inputs": {
+      "cnet": "control_v11p_sd15_lineart.pth"
+    },
+    "class_type": "ACN_ControlNetLoaderAdvanced",
+    "_meta": {
+      "title": "Load Advanced ControlNet Model 🛂🅐🅒🅝"
+    }
+  },
+  "61": {
+    "inputs": {
+      "weight": 1,
+      "weight_faceidv2": 1,
+      "weight_type": "linear",
+      "combine_embeds": "concat",
+      "start_at": 0,
+      "end_at": 1,
+      "embeds_scaling": "V only",
+      "model": [
+        "63",
+        0
+      ],
+      "ipadapter": [
+        "63",
+        1
+      ],
+      "image": [
+        "117",
+        0
+      ],
+      "attn_mask": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "IPAdapterFaceID",
+    "_meta": {
+      "title": "IPAdapter FaceID"
+    }
+  },
+  "63": {
+    "inputs": {
+      "preset": "FACEID PLUS V2",
+      "lora_strength": 0.41,
+      "provider": "CUDA",
+      "model": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "IPAdapterUnifiedLoaderFaceID",
+    "_meta": {
+      "title": "IPAdapter Unified Loader FaceID"
+    }
+  },
+  "64": {
+    "inputs": {
+      "image": "husya.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "65": {
+    "inputs": {
+      "method": "skimage",
+      "factor": 1,
+      "device": "cpu",
+      "image": [
+        "8",
+        0
+      ],
+      "reference": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "ImageHistogramMatch+",
+    "_meta": {
+      "title": "🔧 Image Histogram Match"
+    }
+  },
+  "117": {
+    "inputs": {
+      "crop_padding_factor": 0.1,
+      "cascade_xml": "haarcascade_frontalface_alt2.xml",
+      "image": [
+        "64",
+        0
+      ]
+    },
+    "class_type": "Image Crop Face",
+    "_meta": {
+      "title": "Image Crop Face"
+    }
+  },
+  "136": {
+    "inputs": {
+      "model_name": "RealESRGAN_x2.pth"
+    },
+    "class_type": "Upscale Model Loader",
+    "_meta": {
+      "title": "Upscale Model Loader"
+    }
+  },
+  "137": {
+    "inputs": {
+      "per_batch": 1,
+      "upscale_model": [
+        "136",
+        0
+      ],
+      "images": [
+        "65",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModelBatched",
+    "_meta": {
+      "title": "Image Upscale With Model Batched"
+    }
+  },
+  "140": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "137",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "148": {
+    "inputs": {
+      "channel": "red",
+      "image": [
+        "150",
+        0
+      ]
+    },
+    "class_type": "ImageToMask",
+    "_meta": {
+      "title": "Convert Image to Mask"
+    }
+  },
+  "150": {
+    "inputs": {
+      "image": "mask_illustr_3_1.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  }
+}
