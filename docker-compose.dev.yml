@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  web:
+    command: python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    develop:
+      watch:
+        - action: sync
+          path: ./backend
+          target: /app
+          ignore:
+            - .venv/
+            - .pytest_cache/
+            - __pycache__/
+            - "*.pyc"
+            - "*.log"
+        - action: rebuild
+          path: ./backend/requirements.txt
+
+  frontend_dev:
+    build:
+      context: ./wonderwraps
+      dockerfile: Dockerfile.dev
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5173 --strictPort"
+    ports:
+      - "8080:5173"
+    depends_on:
+      web:
+        condition: service_started
+    environment:
+      DOCKER: "1"
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://vm-1308.user-project-714.cloud.intcld.ru:8000}
+    volumes:
+      - ./wonderwraps:/app
+      - wonderwraps_node_modules:/app/node_modules
+    healthcheck:
+      disable: true
+    develop:
+      watch:
+        - action: sync
+          path: ./wonderwraps
+          target: /app
+          ignore:
+            - node_modules/
+            - dist/
+            - .vite/
+            - coverage/
+            - "*.log"
+            - .env
+            - .env.*
+        - action: rebuild
+          path: ./wonderwraps/package.json
+        - action: rebuild
+          path: ./wonderwraps/package-lock.json
+
+volumes:
+  wonderwraps_node_modules:
+

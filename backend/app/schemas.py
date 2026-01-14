@@ -39,6 +39,13 @@ class UserProfile(BaseModel):
     firstName: str
     lastName: str
     phone: Optional[str] = None
+    deliveryRecipient: Optional[str] = None
+    deliveryCity: Optional[str] = None
+    deliveryStreet: Optional[str] = None
+    deliveryHouse: Optional[str] = None
+    deliveryApartment: Optional[str] = None
+    deliveryPostalCode: Optional[str] = None
+    deliveryComment: Optional[str] = None
 
 class AuthResponse(BaseModel):
     token: str
@@ -55,6 +62,13 @@ class UserProfileUpdate(BaseModel):
     firstName: Optional[str] = None
     lastName: Optional[str] = None
     phone: Optional[str] = None
+    deliveryRecipient: Optional[str] = None
+    deliveryCity: Optional[str] = None
+    deliveryStreet: Optional[str] = None
+    deliveryHouse: Optional[str] = None
+    deliveryApartment: Optional[str] = None
+    deliveryPostalCode: Optional[str] = None
+    deliveryComment: Optional[str] = None
 
 # ===== Book Schemas =====
 
@@ -110,6 +124,20 @@ class BookHighlightsResponse(BaseModel):
 class RelatedBooksResponse(BaseModel):
     data: List[BookSummary]
 
+class FilterCategory(BaseModel):
+    slug: str
+    label: str
+
+class FilterAgeRange(BaseModel):
+    id: str
+    label: str
+
+class BookFiltersResponse(BaseModel):
+    categories: List[FilterCategory]
+    ageRanges: List[FilterAgeRange]
+    tags: List[BookTag] = []
+    years: List[int] = []
+
 class PreviewPage(BaseModel):
     index: int
     imageUrl: str
@@ -131,6 +159,12 @@ class PersonalizationStatus(str, Enum):
     CANCELLED = "cancelled"
     FAILED = "failed"
 
+class GenerationRetry(BaseModel):
+    used: int
+    limit: int
+    remaining: int
+    allowed: bool
+
 class Personalization(BaseModel):
     id: str
     slug: str
@@ -143,6 +177,7 @@ class Personalization(BaseModel):
     avatarUrl: Optional[str] = None
     preview: Optional[PreviewResponse] = None
     cartItemId: Optional[str] = None
+    generationRetry: Optional[GenerationRetry] = None
 
 class AvatarUploadResponse(BaseModel):
     uploadId: str
@@ -236,6 +271,7 @@ class CreateOrderRequest(BaseModel):
 
 class OrderItem(BaseModel):
     id: str
+    personalizationId: str
     slug: str
     title: str
     quantity: int

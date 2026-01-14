@@ -50,18 +50,49 @@ services:
       CELERY_RESULT_BACKEND: "redis://redis:6379/0"
       HF_HOME: "/models/hf"
     volumes:
+      - ./backend:/app
       - models_cache:/models
 
   comfyui:
     build:
       context: ./comfyui
       dockerfile: Dockerfile
+      args:
+        # Outbound proxy for build steps (apt/git/pip).
+        # Keep secrets out of git by putting them in root `.env`.
+        # NOTE: `apt` does NOT support SOCKS proxies; if you only have socks5, leave COMFY_BUILD_PROXY empty.
+        HTTP_PROXY: ${COMFY_BUILD_PROXY:-}
+        HTTPS_PROXY: ${COMFY_BUILD_PROXY:-}
+        ALL_PROXY: ${COMFY_BUILD_PROXY:-}
+        NO_PROXY: ${COMFY_NO_PROXY:-localhost,127.0.0.1,db,redis,web,celery_worker,comfyui}
+        http_proxy: ${COMFY_BUILD_PROXY:-}
+        https_proxy: ${COMFY_BUILD_PROXY:-}
+        all_proxy: ${COMFY_BUILD_PROXY:-}
+        no_proxy: ${COMFY_NO_PROXY:-localhost,127.0.0.1,db,redis,web,celery_worker,comfyui}
     restart: unless-stopped
     ports:
       - "8188:8188"
+    environment:
+      # Toggle proxy without removing the proxy URL from `.env`.
+      # 1 = enabled (default), 0 = disabled (entrypoint will unset proxy env vars).
+      COMFY_PROXY_ENABLED: ${COMFY_PROXY_ENABLED:-1}
+      # Outbound proxy for runtime downloads (HF, custom nodes, etc.)
+      HTTP_PROXY: ${COMFY_PROXY:-}
+      HTTPS_PROXY: ${COMFY_PROXY:-}
+      ALL_PROXY: ${COMFY_PROXY:-}
+      NO_PROXY: ${COMFY_NO_PROXY:-localhost,127.0.0.1,db,redis,web,celery_worker,comfyui}
+      # Some tools only read lowercase proxy vars.
+      http_proxy: ${COMFY_PROXY:-}
+      https_proxy: ${COMFY_PROXY:-}
+      all_proxy: ${COMFY_PROXY:-}
+      no_proxy: ${COMFY_NO_PROXY:-localhost,127.0.0.1,db,redis,web,celery_worker,comfyui}
+      # Persist HuggingFace cache inside the mounted models volume (so downloads survive container recreation).
+      HF_HOME: "/home/runner/ComfyUI/models/hf"
     volumes:
       - comfyui_data:/home/runner/ComfyUI
       - models_cache:/home/runner/ComfyUI/models
+      # Use the repo entrypoint script without rebuilding the image (handy in restricted networks).
+      - ./comfyui/entrypoint.sh:/home/runner/entrypoint.sh:ro
     deploy:
       resources:
         reservations:
@@ -91,6 +122,7 @@ services:
       COMFY_BASE_URL: "http://comfyui:8188"
       INSIGHTFACE_HOME: "/models/insightface"
     volumes:
+      - ./backend:/app
       - models_cache:/models
       - ./models/insightface:/models/insightface:ro
     deploy:
@@ -99,17 +131,46 @@ services:
           devices:
             - capabilities: ["gpu"]
 
+  celery_render_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: python -m celery -A app.workers.celery_app worker --loglevel=info --concurrency=1 -Q render,celery
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: "postgresql+psycopg://user:password@db/dbname"
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+      HF_HOME: "/models/hf"
+    volumes:
+      - ./backend:/app
+      - models_cache:/models
+
   frontend:
     build:
-      context: ./faceapp-front
+      context: ./wonderwraps
       dockerfile: Dockerfile
+      args:
+        # API base URL for frontend build (used by Vite)
+        # This should be the URL that browsers will use to access the backend
+        # For production, set VITE_API_BASE_URL in .env file (e.g., https://api.yourdomain.com)
+        # Defaults to http://vm-1308.user-project-714.cloud.intcld.ru:8000
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://vm-1308.user-project-714.cloud.intcld.ru:8000}
     ports:
-      - "3000:80"
+      - "80:80"
     depends_on:
-      - web
+      web:
+        condition: service_started
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:80"]
       interval: 30s
       timeout: 3s
       retries: 3

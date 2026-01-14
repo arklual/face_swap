@@ -1,0 +1,386 @@
+# Правила разработки для WonderWraps
+
+## Общие принципы
+
+1. **Строгая типизация** - НИКОГДА не используй `any`. Всегда используй конкретные типы или `unknown` при необходимости.
+2. **Читаемость превыше всего** - Код должен быть понятен без комментариев.
+3. **Консистентность** - Следуй существующим паттернам в проекте.
+
+---
+
+## TypeScript
+
+### Типизация
+
+- ✅ **НЕ используй `any`** - это строгая ошибка в ESLint. Используй:
+  - Конкретные типы
+  - `unknown` для динамических данных (с проверками)
+  - Утилиты типов: `Record<string, T>`, `Pick`, `Omit`, `Partial`
+  - Type assertions только когда абсолютно необходимо: `as T`
+
+- ✅ **Импорт типов** - всегда используй `import type` для типов:
+  ```typescript
+  import type { ComponentType, ReactNode } from 'react';
+  import type { RouteObject } from 'react-router-dom';
+  ```
+
+- ✅ **Типы для props** - именуй с суффиксом `Props`:
+  ```typescript
+  type ButtonProps = {
+    variant: 'primary' | 'secondary';
+    children: ReactNode;
+  };
+  ```
+
+- ✅ **Строгая типизация для lazy компонентов**:
+  ```typescript
+  type LazyComponent = Promise<{ default: ComponentType<Record<string, unknown>> }>;
+  const Home = lazy((): LazyComponent => import('./home/Home'));
+  ```
+
+### Безопасность типов
+
+- ✅ **Избегай non-null assertions (`!`)** - используй условные проверки:
+  ```typescript
+  // ❌ Плохо
+  const value = data!.property;
+  
+  // ✅ Хорошо
+  if (data) {
+    const value = data.property;
+  }
+  ```
+
+- ✅ **Проверка окружения** - используй безопасные проверки:
+  ```typescript
+  if (typeof window !== 'undefined') { ... }
+  if (typeof import.meta !== 'undefined' && import.meta.env?.VAR) { ... }
+  ```
+
+---
+
+## React
+
+### Компоненты
+
+- ✅ **Именование** - используй PascalCase для компонентов:
+  ```typescript
+  export function ProductCard({ title }: ProductCardProps) { ... }
+  ```
+
+- ✅ **Функциональные компоненты** - всегда используй function declarations или arrow functions:
+  ```typescript
+  // ✅ Хорошо
+  export function MyComponent() { ... }
+  export const MyComponent = () => { ... }
+  ```
+
+- ✅ **Props деструктуризация** - деструктурируй props в сигнатуре:
+  ```typescript
+  function Button({ variant, children, onClick }: ButtonProps) { ... }
+  ```
+
+- ✅ **Conditional rendering** - используй `&&` вместо тернарников для простых случаев:
+  ```typescript
+  // ✅ Хорошо
+  {isLoading && <Loader />}
+  {error && <ErrorMessage message={error} />}
+  
+  // ❌ Плохо (для простых случаев)
+  {isLoading ? <Loader /> : null}
+  ```
+
+### Hooks
+
+- ✅ **useMemo и useCallback** - используй только когда необходимо:
+  ```typescript
+  // ✅ Хорошо - дорогие вычисления
+  const expensiveValue = useMemo(() => computeValue(data), [data]);
+  
+  // ❌ Плохо - простые вычисления
+  const simpleValue = useMemo(() => data.value, [data]);
+  ```
+
+- ✅ **Dependencies** - всегда включай все зависимости в массив зависимостей hooks.
+
+- ✅ **Custom hooks** - именуй с префиксом `use`:
+  ```typescript
+  export function useAuth() { ... }
+  ```
+
+### События и обработчики
+
+- ✅ **Обработчики событий** - именуй с префиксом `handle`:
+  ```typescript
+  const handleClick = () => { ... };
+  const handleSubmit = (e: FormEvent) => { ... };
+  ```
+
+- ✅ **Keyboard events** - используй константы из `@shared/constants/keyboard`:
+  ```typescript
+  import { KEYBOARD_KEYS } from '@shared/constants/keyboard';
+  if (e.key === KEYBOARD_KEYS.ENTER) { ... }
+  ```
+
+---
+
+## Стили и классы
+
+### Условные классы
+
+- ✅ **ИСПОЛЬЗУЙ `cn()` утилиту** - НИКОГДА не используй тернарники или шаблонные строки для условных классов:
+  ```typescript
+  import { cn } from '@shared/utils/className';
+  
+  // ✅ Хорошо
+  <div className={cn(styles.base, isActive && styles.active, className)} />
+  <button className={cn(styles.btn, variant === 'primary' && styles.primary)} />
+  
+  // ❌ Плохо
+  <div className={`${styles.base} ${isActive ? styles.active : ''}`} />
+  <div className={isActive ? styles.active : ''} />
+  ```
+
+- ✅ **Объекты для множественных условий**:
+  ```typescript
+  className={cn(
+    styles.base,
+    {
+      [styles.active]: isActive,
+      [styles.disabled]: isDisabled,
+      [styles.large]: size === 'lg'
+    },
+    className
+  )}
+  ```
+
+---
+
+## Условная логика
+
+### Тернарные операторы
+
+- ✅ **Избегай сложных тернарников** - выноси логику в функции или используй `if/else`:
+  ```typescript
+  // ❌ Плохо - сложно читать
+  const status = showPreview ? 'completed' : isGenerating ? 'current' : 'upcoming';
+  
+  // ✅ Хорошо - читаемо
+  function getStepStatus(showPreview: boolean, isGenerating: boolean) {
+    if (showPreview) return 'completed';
+    if (isGenerating) return 'current';
+    return 'upcoming';
+  }
+  ```
+
+- ✅ **Простые тернарники допустимы** только для простых присваиваний:
+  ```typescript
+  // ✅ Допустимо
+  const value = condition ? a : b;
+  const url = slug ? ROUTES.BOOK_DETAIL(slug) : ROUTES.HOME;
+  ```
+
+- ✅ **Логика в JSX** - выноси в функции:
+  ```typescript
+  // ❌ Плохо
+  <button onClick={() => setOpen(open === idx ? null : idx)}>
+  
+  // ✅ Хорошо
+  const handleToggle = (index: number) => {
+    if (open === index) {
+      setOpen(null);
+    } else {
+      setOpen(index);
+    }
+  };
+  <button onClick={() => handleToggle(idx)}>
+  ```
+
+---
+
+## Работа с localStorage
+
+- ✅ **ИСПОЛЬЗУЙ утилиты из `@shared/utils/storage`** - НИКОГДА не обращайся напрямую к `localStorage`:
+  ```typescript
+  import { getStorageItem, setStorageItem, removeStorageItem } from '@shared/utils/storage';
+  
+  // ✅ Хорошо
+  const token = getStorageItem(STORAGE_KEYS.SESSION_TOKEN);
+  setStorageItem(STORAGE_KEYS.SESSION_TOKEN, token);
+  
+  // ❌ Плохо
+  const token = localStorage.getItem(STORAGE_KEYS.SESSION_TOKEN);
+  localStorage.setItem(STORAGE_KEYS.SESSION_TOKEN, token);
+  ```
+
+- ✅ **Ключи хранилища** - используй константы из `@shared/constants/storage`:
+  ```typescript
+  import { STORAGE_KEYS } from '@shared/constants/storage';
+  getStorageItem(STORAGE_KEYS.SESSION_TOKEN);
+  ```
+
+---
+
+## API и Fetch
+
+### Безопасная работа с окружением
+
+- ✅ **Vite environment variables** - используй `import.meta.env`:
+  ```typescript
+  if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  ```
+
+- ✅ **TypeScript для env** - добавь `/// <reference types="vite/client" />` в `vite-env.d.ts`.
+
+### Fetch утилиты
+
+- ✅ **Используй `customFetch`** для всех API запросов - он обрабатывает авторизацию и ошибки.
+
+---
+
+## Форматирование и структура
+
+### Импорты
+
+- ✅ **Порядок импортов**:
+  1. React и React-библиотеки
+  2. Внешние библиотеки
+  3. Внутренние компоненты (`@app/...`)
+  4. Общие утилиты (`@shared/...`)
+  5. Стили
+  6. Типы (если не импортируются вместе с кодом)
+
+- ✅ **Группировка** - разделяй пустыми строками:
+  ```typescript
+  import { useState } from 'react';
+  import { useAtom } from 'jotai';
+  
+  import { Button } from '@app/components/ui/Button';
+  import { cn } from '@shared/utils/className';
+  
+  import styles from './Component.module.scss';
+  ```
+
+### Экспорты
+
+- ✅ **Named exports** - предпочитай named exports:
+  ```typescript
+  export function MyComponent() { ... }
+  export type MyType = { ... };
+  ```
+
+- ✅ **Default exports** - используй только для страниц/роутов:
+  ```typescript
+  export default function HomePage() { ... }
+  ```
+
+---
+
+## Обработка ошибок
+
+- ✅ **Не используй `alert()`** - используй `console.warn()` или UI компоненты для уведомлений:
+  ```typescript
+  // ❌ Плохо
+  alert('Error occurred');
+  
+  // ✅ Хорошо
+  console.warn('Error occurred');
+  // или UI компонент для уведомлений
+  ```
+
+- ✅ **Try-catch** - обрабатывай ошибки явно:
+  ```typescript
+  try {
+    await operation();
+  } catch (error) {
+    console.error('Operation failed:', error);
+    // Обработка ошибки
+  }
+  ```
+
+---
+
+## Компоненты и переиспользование
+
+- ✅ **Иконки** - используй компоненты из `@shared/icons`, не инлайн SVG:
+  ```typescript
+  import { CartIcon, ArrowLeftIcon } from '@shared/icons';
+  
+  // ✅ Хорошо
+  <CartIcon size={20} />
+  
+  // ❌ Плохо
+  <svg>...</svg>
+  ```
+
+- ✅ **Мелкие компоненты** - выноси повторяющиеся паттерны в отдельные компоненты.
+
+- ✅ **Мемоизация** - используй `React.memo` только для тяжелых компонентов, которые часто ре-рендерятся.
+
+---
+
+## Jotai атомы
+
+- ✅ **Именование атомов** - используй суффикс `Atom`:
+  ```typescript
+  export const sessionTokenAtom = atom<string | null>(null);
+  export const setSessionTokenAtom = atom(null, (get, set, token: string) => { ... });
+  ```
+
+- ✅ **Read-only атомы** - для производных значений используй `atom((get) => ...)`.
+
+---
+
+## Доступность (A11y)
+
+- ✅ **ARIA атрибуты** - используй где необходимо:
+  ```typescript
+  <button aria-label="Закрыть меню" aria-expanded={isOpen}>
+  <div role="dialog" aria-modal="true">
+  ```
+
+- ✅ **Семантические теги** - используй правильные HTML элементы:
+  ```typescript
+  <nav>, <main>, <section>, <article>, <button>, <a>
+  ```
+
+- ✅ **Keyboard navigation** - обрабатывай Enter, Space, Escape, Arrow keys где необходимо.
+
+---
+
+## Производительность
+
+- ✅ **Lazy loading** - используй для роутов:
+  ```typescript
+  const Home = lazy((): LazyComponent => import('./home/Home'));
+  ```
+
+- ✅ **Избегай лишних ре-рендеров** - используй `useMemo` и `useCallback` обоснованно.
+
+- ✅ **Изображения** - добавляй `loading="lazy"` для изображений ниже fold.
+
+---
+
+## Code Review Checklist
+
+Перед коммитом проверь:
+- [ ] Нет использования `any`
+- [ ] Все типы импортированы как `import type`
+- [ ] Используется `cn()` для условных классов
+- [ ] Нет сложных тернарников в JSX
+- [ ] Используются утилиты для localStorage
+- [ ] Обработка ошибок реализована
+- [ ] Компоненты правильно типизированы
+- [ ] Нет неиспользуемых импортов
+- [ ] Код читаемый и понятный без комментариев
+
+---
+
+## Дополнительные ресурсы
+
+- TypeScript Handbook: https://www.typescriptlang.org/docs/
+- React Docs: https://react.dev/
+- React TypeScript Cheatsheet: https://react-typescript-cheatsheet.netlify.app/
+

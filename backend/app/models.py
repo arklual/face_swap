@@ -24,6 +24,32 @@ class Job(Base):
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
+
+class JobArtifact(Base):
+    """
+    Stores generated artifacts for a personalization job.
+
+    We intentionally keep this in a separate table to avoid altering the `jobs` table
+    without migrations (create_all will create missing tables automatically).
+    """
+
+    __tablename__ = "job_artifacts"
+
+    id = Column(String, primary_key=True, index=True)
+    job_id = Column(String, ForeignKey("jobs.job_id"), nullable=False, index=True)
+
+    # prepay|postpay
+    stage = Column(String, nullable=False, index=True)
+
+    # page_png|spread_png|print_pdf|debug_json|...
+    kind = Column(String, nullable=False, index=True)
+
+    page_num = Column(Integer, nullable=True, index=True)
+    s3_uri = Column(String, nullable=False)
+    meta = Column(JSON, nullable=True)
+
+    created_at = Column(DateTime, server_default=func.now())
+
 class User(Base):
     """User/Customer table"""
     __tablename__ = "users"
@@ -33,6 +59,29 @@ class User(Base):
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     phone = Column(String, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class UserDeliveryAddress(Base):
+    """
+    Stores user's default delivery address.
+
+    Kept as a separate table so it can be created automatically without migrations.
+    """
+
+    __tablename__ = "user_delivery_addresses"
+
+    user_id = Column(String, ForeignKey("users.id"), primary_key=True, index=True)
+
+    recipient = Column(String, nullable=True)
+    city = Column(String, nullable=True)
+    street = Column(String, nullable=True)
+    house = Column(String, nullable=True)
+    apartment = Column(String, nullable=True)
+    postal_code = Column(String, nullable=True)
+    comment = Column(String, nullable=True)
+
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -63,7 +112,6 @@ class Book(Base):
     compare_at_price_amount = Column(Float, nullable=True)
     compare_at_price_currency = Column(String, nullable=True)
     discount_percent = Column(Float, nullable=True)
-    tags = Column(JSON, nullable=True)  # List of tag objects
     specs = Column(JSON, nullable=True)  # Book specs object
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
@@ -103,6 +151,7 @@ class CartItem(Base):
 class OrderStatus(enum.Enum):
     PENDING_PAYMENT = "pending_payment"
     PROCESSING = "processing"
+    DELIVERY = "delivery"
     FULFILLED = "fulfilled"
     CANCELLED = "cancelled"
     REFUNDED = "refunded"

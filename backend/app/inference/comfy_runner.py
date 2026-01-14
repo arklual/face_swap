@@ -6,7 +6,7 @@ import base64
 import requests
 import random
 from PIL import Image
-from typing import Optional
+from typing import Any, Dict, Optional
 import os
 from ..config import settings
 from ..logger import logger
@@ -30,6 +30,7 @@ def build_comfy_workflow(
     negative_prompt: str = "",
     mask_filename: Optional[str] = None,
     use_alpha_for_mask: bool = False,
+    seed: Optional[int] = None,
 ) -> dict:
     if not negative_prompt:
         negative_prompt = "plastic skin, deformed, cross-eyed, mismatched pupils, crooked teeth, bruises under the eyes, red nose, pink nose, extra teeth, oversized eyes, long neck, strabismus, big teeth, makeup, different color eyes, heterochromia, mismatched eyes, squint, misaligned eyes, diverse eyes"
@@ -60,6 +61,10 @@ def build_comfy_workflow(
                         else:
                             if not inputs.get("text"):
                                 inputs["text"] = negative_prompt
+            if seed is not None:
+                for node in prompt_dict.values():
+                    if isinstance(node, dict) and node.get("class_type") == "KSampler":
+                        node.setdefault("inputs", {})["seed"] = seed
             return prompt_dict
         except Exception as e:
             logger.warning(f"Failed to load API workflow, falling back to UI workflow: {e}")
@@ -115,11 +120,11 @@ def build_comfy_workflow(
         return prompt_dict
     
     nodes_by_id = {str(n["id"]): n for n in workflow_data["nodes"]}
-    prompt_dict: dict[str, dict] = {}
-    input_name_by_index: dict[str, dict[int, str]] = {}
+    prompt_dict: Dict[str, Dict[str, Any]] = {}
+    input_name_by_index: Dict[str, Dict[int, str]] = {}
     for node_id, node in nodes_by_id.items():
         prompt_dict[node_id] = {"class_type": node["type"], "inputs": {}}
-        slot_map: dict[int, str] = {}
+        slot_map: Dict[int, str] = {}
         for idx, inp in enumerate(node.get("inputs", [])):
             if isinstance(inp, dict) and "name" in inp:
                 slot_map[idx] = inp["name"]
@@ -189,7 +194,9 @@ def build_comfy_workflow(
                 inputs["filename_prefix"] = value
 
         if node_type == "KSampler":
-            if "seed" not in inputs:
+            if seed is not None:
+                inputs["seed"] = seed
+            elif "seed" not in inputs:
                 inputs["seed"] = widgets[0] if len(widgets) > 0 else int(time.time())
             if "steps" not in inputs:
                 inputs["steps"] = widgets[2] if len(widgets) > 2 else 28
@@ -320,7 +327,7 @@ def upload_image_to_comfy(img: Image.Image, filename: str, server_address: str) 
             "overwrite": "true"
         }
         
-        response = requests.post(f"{server_address}/upload/image", files=files, data=data)
+        response = requests.post(f"{server_address}/upload/image", files=files, data=data, timeout=30)
         response.raise_for_status()
         result = response.json()
         
@@ -332,53 +339,59 @@ def upload_image_to_comfy(img: Image.Image, filename: str, server_address: str) 
         raise
 
 def _add_face_alpha_channel(pil_img: Image.Image) -> Image.Image:
-    """Detect a face on the illustration and add a soft alpha mask around it.
-    Returns the original image with an RGBA alpha channel if face found, otherwise the original image.
+    """
+    Detect a face on the illustration and return an RGBA image with a soft alpha mask around it.
+
+    Important: Our ComfyUI workflow may use `ImageToMask(channel=alpha)`. That requires the
+    source image to have an alpha channel. To avoid workflow crashes like:
+      "index 3 is out of bounds for dimension 3 with size 3"
+    this function always returns an RGBA image.
+
+    If a face is not detected (or detection fails), we return an RGBA image with a fully
+    transparent alpha channel (no mask), so the workflow can continue safely.
     """
     try:
         import numpy as np
         import cv2
-        import insightface
-        from insightface.app import FaceAnalysis
 
         rgb = pil_img.convert("RGB")
         img_np = np.array(rgb)
         img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
 
-        try:
-            app = FaceAnalysis(name='buffalo_l', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
-        except Exception:
-            app = FaceAnalysis(name='buffalo_l', providers=['CPUExecutionProvider'])
-        app.prepare(ctx_id=0, det_size=(640, 640))
-        faces = app.get(img_bgr)
-
         x1 = y1 = x2 = y2 = None
-        if faces:
-            faces.sort(key=lambda f: (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1]), reverse=True)
-            x1, y1, x2, y2 = faces[0].bbox.astype(int)
-        else:
-            try:
-                cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
-                cascade = cv2.CascadeClassifier(cascade_path)
-                gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
-                dets = cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(48, 48))
-                if len(dets) > 0:
-                    dets = sorted(dets, key=lambda r: r[2] * r[3], reverse=True)
-                    x, y, w, h = dets[0]
-                    x1, y1, x2, y2 = x, y, x + w, y + h
-            except Exception:
-                x1 = y1 = x2 = y2 = None
+        try:
+            cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+            cascade = cv2.CascadeClassifier(cascade_path)
+            gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+            dets = cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(48, 48))
+            if len(dets) > 0:
+                dets = sorted(dets, key=lambda r: r[2] * r[3], reverse=True)
+                x, y, w, h = dets[0]
+                x1, y1, x2, y2 = int(x), int(y), int(x + w), int(y + h)
+        except Exception:
+            x1 = y1 = x2 = y2 = None
 
         if x1 is None or y1 is None or x2 is None or y2 is None:
-            return pil_img
+            rgba = rgb.convert("RGBA")
+            rgba.putalpha(Image.new("L", rgba.size, 0))
+            return rgba
 
         h, w = img_np.shape[:2]
+        x1 = max(0, min(w - 1, int(x1)))
+        y1 = max(0, min(h - 1, int(y1)))
+        x2 = max(0, min(w, int(x2)))
+        y2 = max(0, min(h, int(y2)))
+        if x2 <= x1 or y2 <= y1:
+            rgba = rgb.convert("RGBA")
+            rgba.putalpha(Image.new("L", rgba.size, 0))
+            return rgba
+
         bw = x2 - x1
         bh = y2 - y1
         cx = x1 + bw // 2
         cy = y1 + int(bh * 0.55)
-        ax = int(bw * 0.8)
-        ay = int(bh * 1.1)
+        ax = max(1, int(bw * 0.8))
+        ay = max(1, int(bh * 1.1))
 
         mask = np.zeros((h, w), dtype=np.uint8)
         cv2.ellipse(mask, (cx, cy), (ax, ay), 0, 0, 360, 255, -1)
@@ -390,7 +403,84 @@ def _add_face_alpha_channel(pil_img: Image.Image) -> Image.Image:
         return rgba
     except Exception as e:
         logger.warning(f"Failed to create face alpha channel: {e}")
-        return pil_img
+        try:
+            rgba = pil_img.convert("RGBA")
+            rgba.putalpha(Image.new("L", rgba.size, 0))
+            return rgba
+        except Exception:
+            return pil_img
+
+
+def _build_face_mask(pil_img: Image.Image) -> Image.Image:
+    """
+    Build a grayscale face mask (L) for an illustration image.
+
+    This is used to feed ComfyUI workflows that expect an explicit mask image and use
+    `ImageToMask(channel=red)`.
+    """
+    try:
+        import numpy as np
+        import cv2
+
+        rgb = pil_img.convert("RGB")
+        img_np = np.array(rgb)
+        img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+        gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+
+        h, w = img_np.shape[:2]
+
+        x1 = y1 = x2 = y2 = None
+        try:
+            cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+            cascade = cv2.CascadeClassifier(cascade_path)
+            dets = cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(48, 48))
+            if len(dets) > 0:
+                dets = sorted(dets, key=lambda r: r[2] * r[3], reverse=True)
+                x, y, bw, bh = dets[0]
+                x1, y1, x2, y2 = int(x), int(y), int(x + bw), int(y + bh)
+        except Exception:
+            x1 = y1 = x2 = y2 = None
+
+        if x1 is None or y1 is None or x2 is None or y2 is None or x2 <= x1 or y2 <= y1:
+            # Fallback: centered ellipse in the upper half of the page.
+            cx = w // 2
+            cy = int(h * 0.45)
+            ax = max(1, int(w * 0.18))
+            ay = max(1, int(h * 0.22))
+        else:
+            bw = x2 - x1
+            bh = y2 - y1
+            cx = x1 + bw // 2
+            cy = y1 + int(bh * 0.55)
+            ax = max(1, int(bw * 0.8))
+            ay = max(1, int(bh * 1.1))
+
+        mask = np.zeros((h, w), dtype=np.uint8)
+        cv2.ellipse(mask, (int(cx), int(cy)), (int(ax), int(ay)), 0, 0, 360, 255, -1)
+
+        # Blur radius proportional to image size; tuned for 850px previews and larger.
+        sigma = max(8, int(min(w, h) * 0.03))
+        mask = cv2.GaussianBlur(mask, (0, 0), sigmaX=sigma, sigmaY=sigma)
+
+        return Image.fromarray(mask)
+    except Exception as e:
+        logger.warning(f"Failed to build face mask, falling back to PIL mask: {e}")
+        try:
+            from PIL import ImageDraw, ImageFilter
+
+            w, h = pil_img.size
+            mask = Image.new("L", (w, h), 0)
+            draw = ImageDraw.Draw(mask)
+            cx = w // 2
+            cy = int(h * 0.45)
+            ax = max(1, int(w * 0.18))
+            ay = max(1, int(h * 0.22))
+            draw.ellipse((cx - ax, cy - ay, cx + ax, cy + ay), fill=255)
+            radius = max(2, int(min(w, h) * 0.03))
+            return mask.filter(ImageFilter.GaussianBlur(radius=radius))
+        except Exception:
+            # Last resort: full mask (avoid crashing the workflow).
+            return Image.new("L", pil_img.size, 255)
 
 def queue_prompt(workflow: dict, server_address: str) -> str:
     """Queue a workflow to ComfyUI server and return prompt_id"""
@@ -398,7 +488,7 @@ def queue_prompt(workflow: dict, server_address: str) -> str:
     data = json.dumps(p).encode("utf-8")
     
     logger.debug(f"Queueing prompt to ComfyUI: {server_address}/prompt")
-    req = requests.post(f"{server_address}/prompt", data=data, headers={"Content-Type": "application/json"})
+    req = requests.post(f"{server_address}/prompt", data=data, headers={"Content-Type": "application/json"}, timeout=30)
     req.raise_for_status()
     result = req.json()
     
@@ -406,14 +496,14 @@ def queue_prompt(workflow: dict, server_address: str) -> str:
     logger.info(f"ComfyUI prompt queued: {prompt_id}")
     return prompt_id
 
-def get_image_result(prompt_id: str, server_address: str, timeout: int = 600) -> Image.Image:
+def get_image_result(prompt_id: str, server_address: str, timeout: int = 300) -> Image.Image:
     """Poll ComfyUI server for result and return the generated image"""
     start = time.time()
     logger.info(f"Waiting for ComfyUI result: {prompt_id}")
     
     while time.time() - start < timeout:
         try:
-            history_resp = requests.get(f"{server_address}/history/{prompt_id}")
+            history_resp = requests.get(f"{server_address}/history/{prompt_id}", timeout=10)
             history_resp.raise_for_status()
             history = history_resp.json()
 
@@ -457,7 +547,7 @@ def get_image_result(prompt_id: str, server_address: str, timeout: int = 600) ->
                             "subfolder": subfolder,
                             "type": "output",
                         }
-                        img_resp = requests.get(f"{server_address}/view", params=params)
+                        img_resp = requests.get(f"{server_address}/view", params=params, timeout=30)
                         img_resp.raise_for_status()
                         return Image.open(io.BytesIO(img_resp.content))
                 
@@ -479,6 +569,7 @@ def run_face_transfer_comfy_api(
     prompt: str,
     negative_prompt: str = "",
     mask_pil: Optional[Image.Image] = None,
+    seed: Optional[int] = None,
 ) -> Image.Image:
     """
     Run face transfer using ComfyUI REST API.
@@ -487,19 +578,24 @@ def run_face_transfer_comfy_api(
     logger.info(f"Starting face transfer with ComfyUI: {server_address}")
     
 
+    # Important: Do NOT rely on alpha-channel masks. In ComfyUI, `LoadImage` typically produces
+    # a 3-channel IMAGE tensor; `ImageToMask(channel=alpha)` crashes with:
+    #   "index 3 is out of bounds for dimension 3 with size 3"
+    # So we always provide an explicit mask image and keep `ImageToMask` on a real RGB channel.
     if mask_pil is None:
-        illustration_prepared = _add_face_alpha_channel(illustration_pil)
-    else:
-        illustration_prepared = illustration_pil
+        mask_pil = _build_face_mask(illustration_pil)
+
+    illustration_prepared = illustration_pil.convert("RGB")
     child_filename = f"child_{uuid.uuid4().hex}.png"
     illustration_filename = f"illustration_{uuid.uuid4().hex}.png"
     mask_filename = None
     
     child_uploaded = upload_image_to_comfy(child_pil, child_filename, server_address)
     illustration_uploaded = upload_image_to_comfy(illustration_prepared, illustration_filename, server_address)
-    if mask_pil is not None:
-        mask_filename_gen = f"mask_{uuid.uuid4().hex}.png"
-        mask_filename = upload_image_to_comfy(mask_pil, mask_filename_gen, server_address)
+    # Ensure a stable 3-channel mask image so workflows that read "red" don't break.
+    mask_pil_rgb = mask_pil.convert("RGB")
+    mask_filename_gen = f"mask_{uuid.uuid4().hex}.png"
+    mask_filename = upload_image_to_comfy(mask_pil_rgb, mask_filename_gen, server_address)
     
 
     logger.info(f"Sending prompt to ComfyUI - Positive: {prompt}")
@@ -512,12 +608,14 @@ def run_face_transfer_comfy_api(
         prompt,
         negative_prompt,
         mask_filename=mask_filename,
-        use_alpha_for_mask=(mask_filename is None),
+        # Never use alpha-channel-based masking; always use explicit mask file.
+        use_alpha_for_mask=False,
+        seed=seed,
     )
     
 
     prompt_id = queue_prompt(workflow, server_address)
-    result_img = get_image_result(prompt_id, server_address)
+    result_img = get_image_result(prompt_id, server_address, timeout=300)
     
     logger.info(f"Face transfer completed successfully")
     return result_img
@@ -599,7 +697,8 @@ def run_face_transfer(
     child_pil: Image.Image,
     illustration_uri: str,
     prompt: str,
-    negative_prompt: str = ""
+    negative_prompt: str = "",
+    randomize_seed: bool = False,
 ) -> Image.Image:
     """
     Main entry point for face transfer.
@@ -671,12 +770,14 @@ def run_face_transfer(
     except Exception:
         explicit_mask_pil = None
     try:
+        seed = random.randint(1, 2**31 - 1) if randomize_seed else None
         return run_face_transfer_comfy_api(
             child_pil,
             illustration_pil,
             prompt,
             negative_prompt,
             mask_pil=explicit_mask_pil,
+            seed=seed,
         )
     except Exception as e:
         print(f"ComfyUI API failed, falling back to local face transfer: {e}")

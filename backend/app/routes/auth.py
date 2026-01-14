@@ -6,9 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import uuid
 from datetime import datetime, timedelta
+from typing import Optional
 
 from ..db import get_db
-from ..models import User, PasswordResetToken
+from ..models import User, PasswordResetToken, UserDeliveryAddress
 from ..schemas import (
     SignupRequest,
     LoginRequest,
@@ -21,6 +22,26 @@ from ..auth import hash_password, verify_password, create_access_token, get_curr
 from ..logger import logger
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
+
+async def _get_user_delivery(db: AsyncSession, user_id: str) -> Optional[UserDeliveryAddress]:
+    result = await db.execute(select(UserDeliveryAddress).filter(UserDeliveryAddress.user_id == user_id))
+    return result.scalar_one_or_none()
+
+def _to_user_profile(user: User, delivery: Optional[UserDeliveryAddress]) -> UserProfile:
+    return UserProfile(
+        id=user.id,
+        email=user.email,
+        firstName=user.first_name,
+        lastName=user.last_name,
+        phone=user.phone,
+        deliveryRecipient=delivery.recipient if delivery else None,
+        deliveryCity=delivery.city if delivery else None,
+        deliveryStreet=delivery.street if delivery else None,
+        deliveryHouse=delivery.house if delivery else None,
+        deliveryApartment=delivery.apartment if delivery else None,
+        deliveryPostalCode=delivery.postal_code if delivery else None,
+        deliveryComment=delivery.comment if delivery else None,
+    )
 
 @router.post("/signup", response_model=AuthResponse, status_code=201)
 async def signup(request: SignupRequest, db: AsyncSession = Depends(get_db)):
@@ -52,16 +73,11 @@ async def signup(request: SignupRequest, db: AsyncSession = Depends(get_db)):
     
     # Generate token
     token = create_access_token(user.id)
+    delivery = await _get_user_delivery(db, user.id)
     
     return AuthResponse(
         token=token,
-        user=UserProfile(
-            id=user.id,
-            email=user.email,
-            firstName=user.first_name,
-            lastName=user.last_name,
-            phone=user.phone
-        )
+        user=_to_user_profile(user, delivery)
     )
 
 @router.post("/login", response_model=AuthResponse)
@@ -81,16 +97,11 @@ async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)):
     
     # Generate token
     token = create_access_token(user.id)
+    delivery = await _get_user_delivery(db, user.id)
     
     return AuthResponse(
         token=token,
-        user=UserProfile(
-            id=user.id,
-            email=user.email,
-            firstName=user.first_name,
-            lastName=user.last_name,
-            phone=user.phone
-        )
+        user=_to_user_profile(user, delivery)
     )
 
 @router.post("/logout", status_code=204)

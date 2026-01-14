@@ -151,7 +151,7 @@
       "detect_body": "enable",
       "detect_face": "enable",
       "resolution": 640,
-      "bbox_detector": "yolo_nas_m_fp16.onnx",
+      "bbox_detector": "None",
       "pose_estimator": "dw-ll_ucoco_384_bs5.torchscript.pt",
       "scale_stick_for_xinsr_cn": "disable",
       "image": [

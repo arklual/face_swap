@@ -22,6 +22,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install Chromium + OS deps for Playwright (used for HTML->PNG text rendering).
+RUN python -m playwright install --with-deps chromium
+
 COPY . .
 
 EXPOSE 8000

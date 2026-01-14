@@ -1,6 +1,27 @@
 FROM python:3.11-slim
 
-RUN apt-get update && apt-get install -y \
+# Allow outbound proxy for build steps (apt/git/pip). Values come from docker-compose `build.args`.
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG ALL_PROXY
+ARG NO_PROXY
+ARG http_proxy
+ARG https_proxy
+ARG all_proxy
+ARG no_proxy
+
+RUN set -e; \
+    # `apt` does not support SOCKS proxies (e.g. socks5://...), so if such a proxy is configured
+    # via build args/environment, temporarily disable it for this step.
+    proxy_url="${http_proxy:-${HTTP_PROXY:-}}"; \
+    case "$proxy_url" in \
+      socks*://*) \
+        echo "Detected SOCKS proxy for build: $proxy_url"; \
+        echo "Disabling proxy for apt-get (apt does not support SOCKS proxies)"; \
+        unset http_proxy https_proxy all_proxy HTTP_PROXY HTTPS_PROXY ALL_PROXY no_proxy NO_PROXY; \
+        ;; \
+    esac; \
+    apt-get update && apt-get install -y --no-install-recommends \
     git \
     wget \
     curl \
@@ -29,6 +50,7 @@ RUN pip install --no-cache-dir \
     piexif \
     matplotlib \
     segment-anything \
+    pysocks \
     insightface
 
 RUN mkdir -p models/checkpoints models/clip models/vae models/controlnet models/ipadapter models/upscale

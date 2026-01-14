@@ -4,7 +4,7 @@ Authentication utilities and dependencies
 import jwt
 import bcrypt
 from datetime import datetime, timedelta
-from fastapi import Depends, HTTPException, Header
+from fastapi import Depends, HTTPException, Header, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -13,11 +13,11 @@ from .models import User
 from .db import get_db
 from .config import settings
 
-security = HTTPBearer()
+security = HTTPBearer(scheme_name="bearerAuth")
 
 SECRET_KEY = getattr(settings, "JWT_SECRET_KEY", "your-secret-key-change-in-production")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
+ALGORITHM = getattr(settings, "JWT_ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(getattr(settings, "JWT_ACCESS_TOKEN_EXPIRE_MINUTES", 60 * 24 * 7))
 
 def hash_password(password: str) -> str:
     """Hash a password using bcrypt"""
@@ -47,7 +47,7 @@ def decode_access_token(token: str) -> Optional[str]:
         return user_id
     except jwt.ExpiredSignatureError:
         return None
-    except jwt.JWTError:
+    except jwt.exceptions.PyJWTError:
         return None
 
 async def get_current_user(
@@ -90,5 +90,40 @@ async def get_current_user_optional(
     result = await db.execute(select(User).filter(User.id == user_id))
     user = result.scalar_one_or_none()
     
+    return user
+
+
+async def get_current_user_header_or_query(
+    access_token: Optional[str] = Query(None),
+    authorization: Optional[str] = Header(None),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """
+    Auth dependency for download endpoints.
+
+    Supports:
+    - Authorization: Bearer <token>
+    - ?access_token=<token>
+
+    This helps trigger a real browser download without `fetch()` while still requiring auth.
+    """
+    token: Optional[str] = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ")[1]
+    elif access_token:
+        token = access_token
+
+    if not token:
+        raise HTTPException(status_code=401, detail="Missing authentication credentials")
+
+    user_id = decode_access_token(token)
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+
+    result = await db.execute(select(User).filter(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise HTTPException(status_code=401, detail="User not found")
+
     return user
 

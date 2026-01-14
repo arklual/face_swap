@@ -15,6 +15,7 @@ celery_app.conf.update(
     broker_transport_options={"visibility_timeout": 3600},
     task_routes={
         "app.tasks.analyze_photo_task": {"queue": "gpu"},
-        "app.tasks.generate_image_task": {"queue": "gpu"},
+        "app.tasks.build_stage_backgrounds_task": {"queue": "gpu"},
+        "app.tasks.render_stage_pages_task": {"queue": "render"},
     },
 )
