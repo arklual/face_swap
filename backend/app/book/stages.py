@@ -6,20 +6,32 @@ from .manifest import BookManifest
 
 Stage = Literal["prepay", "postpay"]
 
-PREPAY_PAGES_COUNT = 2
+FRONT_HIDDEN_PAGE_NUMS = {1, 23}
+
+
+def _exclude_front_hidden_pages(page_nums: List[int]) -> List[int]:
+    return [page_num for page_num in page_nums if page_num not in FRONT_HIDDEN_PAGE_NUMS]
+
+
+def front_visible_page_nums(manifest: BookManifest) -> List[int]:
+    nums = sorted({p.page_num for p in manifest.pages})
+    return _exclude_front_hidden_pages(nums)
+
+
+def prepay_page_nums(manifest: BookManifest) -> List[int]:
+    candidates = front_visible_page_nums(manifest)
+    if not candidates:
+        return []
+    if len(candidates) == 1:
+        return candidates
+    return [candidates[0], candidates[-1]]
 
 
 def _prepay_page_nums(manifest: BookManifest) -> List[int]:
     """
-    Prepay should generate the first N pages of the book (from the manifest),
-    so numbering can safely start from page_00 when templates are 0-based.
+    Prepay should generate the first and the last front-visible pages of the book.
     """
-    # Prefer pages explicitly allowed for prepay.
-    candidates = sorted({p.page_num for p in manifest.pages if p.availability.prepay})
-    if not candidates:
-        # Fallback: first pages by numeric order.
-        candidates = sorted({p.page_num for p in manifest.pages})
-    return candidates[:PREPAY_PAGES_COUNT]
+    return prepay_page_nums(manifest)
 
 
 def page_nums_for_stage(manifest: BookManifest, stage: Stage) -> List[int]:
@@ -27,11 +39,11 @@ def page_nums_for_stage(manifest: BookManifest, stage: Stage) -> List[int]:
     Resolve the list of page numbers for a stage.
 
     Product requirement:
-    - prepay: first N pages from the manifest (prefer `availability.prepay=True`)
+    - prepay: first and last front-visible pages from the manifest
     - postpay: everything else that is allowed for postpay
     """
     if stage == "prepay":
-        return _prepay_page_nums(manifest)
+        return prepay_page_nums(manifest)
 
     nums: List[int] = []
     for p in manifest.pages:
@@ -39,6 +51,13 @@ def page_nums_for_stage(manifest: BookManifest, stage: Stage) -> List[int]:
             continue
         nums.append(p.page_num)
     return sorted(set(nums))
+
+
+def page_nums_for_front_preview(manifest: BookManifest, stage: Stage) -> List[int]:
+    """
+    Front-facing preview excludes hidden pages (e.g. 1 and 23).
+    """
+    return _exclude_front_hidden_pages(page_nums_for_stage(manifest, stage))
 
 
 def stage_has_face_swap(manifest: BookManifest, stage: Stage) -> bool:

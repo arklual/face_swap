@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from .book.manifest_store import load_manifest
-from .book.stages import page_nums_for_stage
+from .book.stages import page_nums_for_stage, prepay_page_nums
 from .config import settings
 from .db import AsyncSessionLocal
 from .logger import logger
@@ -179,7 +179,10 @@ def build_stage_backgrounds_task(self, job_id: str, stage: str, randomize_seed: 
                 return
 
             manifest = load_manifest(job.slug)
-            page_nums = page_nums_for_stage(manifest, stage) or []
+            if stage == "prepay":
+                page_nums = prepay_page_nums(manifest)
+            else:
+                page_nums = page_nums_for_stage(manifest, stage) or []
             randomize_seed_flag = _should_randomize_seed(job, stage, randomize_seed)
 
             if stage == "prepay":
@@ -288,7 +291,10 @@ def render_stage_pages_task(self, job_id: str, stage: str):
                 return
 
             manifest = load_manifest(job.slug)
-            page_nums = page_nums_for_stage(manifest, stage) or []
+            if stage == "prepay":
+                page_nums = prepay_page_nums(manifest)
+            else:
+                page_nums = page_nums_for_stage(manifest, stage) or []
 
             if stage == "prepay":
                 job.status = "prepay_generating"

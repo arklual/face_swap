@@ -3,10 +3,11 @@ Catalog routes - books, highlights, previews
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_, and_, distinct
+from sqlalchemy import select, or_, and_, distinct, func, text
 from typing import Dict, List, Optional, Set
 import boto3
 from urllib.parse import urlparse
+import re
 
 from ..db import get_db
 from ..models import Book, BookPreview, Job
@@ -156,6 +157,38 @@ def _category_to_tag(category: Optional[str]) -> Optional[BookTag]:
     if not slug:
         return None
     return BookTag(label=_category_label(slug))
+
+def _create_fuzzy_pattern(term: str) -> str:
+    """
+    Создает регулярное выражение для fuzzy поиска с пропуском букв.
+    Например: "прнцесса" -> "п.*р.*н.*ц.*е.*с.*с.*а"
+    Это позволит найти "принцесса" даже если пропущена буква "и".
+    Используем для PostgreSQL оператора ~* (case-insensitive).
+    """
+    if not term:
+        return ""
+    
+    # Для PostgreSQL регулярных выражений нужно экранировать специальные символы
+    # Но нам нужны некоторые из них (. для любого символа, * для повторения)
+    # Экранируем только опасные символы, НЕ экранируем . и * так как они нужны
+    term_lower = term.lower()
+    
+    # Создаем паттерн: между каждой буквой вставляем .* (любые символы, включая 0)
+    # Это позволит находить слова даже если пропущены буквы
+    # Пример: "прнцесса" станет "п.*р.*н.*ц.*е.*с.*с.*а" что найдет "принцесса"
+    pattern_parts = []
+    for i, char in enumerate(term_lower):
+        # Экранируем специальные символы PostgreSQL regex, кроме . и * которые нам нужны
+        # Символы которые нужно экранировать: ^$+?{}[]\|()
+        if char in r'^$+?{}[]\|()':
+            pattern_parts.append(f"\\{char}")
+        else:
+            pattern_parts.append(char)
+        # Между буквами вставляем .* для допущения пропусков
+        if i < len(term_lower) - 1:
+            pattern_parts.append(".*")
+    
+    return "".join(pattern_parts)
 
 def _manifest_gallery_uris(slug: str, limit: int) -> List[str]:
     """
@@ -327,11 +360,42 @@ async def get_books(
     # Apply filters
     filters = []
     if search:
-        search_filter = or_(
-            Book.title.ilike(f"%{search}%"),
-            Book.subtitle.ilike(f"%{search}%")
-        )
-        filters.append(search_filter)
+        # Умный поиск: разбиваем запрос на слова и ищем по всем полям
+        search_terms = [term.strip() for term in search.split() if term.strip()]
+        
+        if search_terms:
+            # Для каждого слова ищем в title, subtitle, description, description_secondary
+            # Книга должна содержать ВСЕ слова (AND логика)
+            # Используем fuzzy search с пропуском букв
+            word_filters = []
+            
+            for term in search_terms:
+                # Сначала пробуем точный поиск (быстрее)
+                exact_pattern = f"%{term}%"
+                # Затем fuzzy поиск с пропуском букв (медленнее, но более гибкий)
+                fuzzy_pattern = _create_fuzzy_pattern(term)
+                
+                # Используем ilike для точного поиска и ~* для fuzzy поиска
+                # PostgreSQL оператор ~* для case-insensitive регулярных выражений
+                # Используем Column().op() для создания оператора ~*
+                word_search = or_(
+                    # Точный поиск (быстрее)
+                    Book.title.ilike(exact_pattern),
+                    Book.subtitle.ilike(exact_pattern),
+                    Book.description.ilike(exact_pattern),
+                    Book.description_secondary.ilike(exact_pattern),
+                    # Fuzzy search через регулярные выражения PostgreSQL (~* case-insensitive)
+                    func.lower(Book.title).op('~*')(fuzzy_pattern),
+                    func.lower(Book.subtitle).op('~*')(fuzzy_pattern),
+                    func.lower(Book.description).op('~*')(fuzzy_pattern),
+                    func.lower(Book.description_secondary).op('~*')(fuzzy_pattern)
+                )
+                word_filters.append(word_search)
+            
+            # Все слова должны найтись (AND)
+            if word_filters:
+                search_filter = and_(*word_filters)
+                filters.append(search_filter)
     
     if category:
         filters.append(Book.category == category)

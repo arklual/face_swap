@@ -1,330 +1,378 @@
 {
-    "slug": "magical-princess-story",
-    "output": {
-      "dpi": 300,
-      "page_size_px": 2551
+  "slug": "magical-princess-story",
+  "output": {
+    "dpi": 300,
+    "page_size_px": 2551
+  },
+  "pages": [
+    {
+      "page_num": 0,
+      "base_uri": "templates/magical-princess-story/pages/page_00_base.jpg",
+      "needs_face_swap": true,
+      "text_layers": [
+        {
+          "text_template": "<span class=\"title-big\">{child_name}</span><br/><span class=\"title-small\">И ФОНАРИК ДОБРОТЫ</span>",
+          "font_uri": "templates/magical-princess-story/fonts/ofont.ru_To Japan.ttf",
+          "style": {
+            "text_align": "center",
+            "allow_title_html": true,
+            "font_family": "CustomFont, 'ofont.ru_To Japan', serif",
+            "font_size": 110,
+            "font_weight": 500,
+            "color": "#ab5792",
+            "stroke_width": 5,
+            "stroke_color": "#ffffff",
+            "shadow_color": "0,0,0",
+            "shadow_opacity": 0.75,
+            "shadow_offset": 4,
+            "shadow_blur": [
+              0,
+              8,
+              16,
+              24,
+              32,
+              40
+            ],
+            "box_w": 1831,
+            "box_h": 1784,
+            "top": 300,
+            "margin_left": -36,
+            "title_big_size": 180,
+            "title_small_size": 100,
+            "white_space": "pre-line"
+          }
+        }
+      ]
     },
-    "pages": [
-      {
-        "page_num": 0,
-        "base_uri": "templates/magical-princess-story/pages/page_00_base.jpg",
-        "needs_face_swap": true,
-        "text_layers": [
-          {
-            "text_template": "<span class=\"title-big\">{child_name}</span><br/><span class=\"title-small\">И ФОНАРИК ДОБРОТЫ</span>",
-            "font_uri": "templates/magical-princess-story/fonts/ofont.ru_To Japan.ttf",
-            "style": {
-              "text_align": "center",
-              "allow_title_html": true,
-              "font_family": "CustomFont, 'ofont.ru_To Japan', serif",
-              "font_size": 110,
-              "font_weight": 500,
-              "color": "#ab5792",
-              "stroke_width": 5,
-              "stroke_color": "#ffffff",
-              "shadow_color": "0,0,0",
-              "shadow_opacity": 0.75,
-              "shadow_offset": 4,
-              "shadow_blur": [
-                0,
-                8,
-                16,
-                24,
-                32,
-                40
-              ],
-              "box_w": 1831,
-              "box_h": 1784,
-              "top": 300,
-              "margin_left": -36,
-              "title_big_size": 180,
-              "title_small_size": 100,
-              "white_space": "pre-line"
-            }
+    {
+      "page_num": 1,
+      "base_uri": "templates/magical-princess-story/pages/page_01_base.jpg",
+      "text_layers": [
+        {
+          "text_template": "Сказка “{child_name} и фонарик доброты” о том, что добро — это не великие подвиги, а маленькие поступки, которые делают жизнь вокруг чуть лучше.\nОна учит замечать чужие трудности и не проходить мимо, даже если помощь кажется пустяковой.\nПоказывает, что забота о других делает человека светлее и счастливее изнутри.\nУ каждого есть свой «фонарик доброты», и он загорается, когда мы выбираем быть внимательными и добрыми к людям рядом.",
+          "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
+          "style": {
+            "text_align": "center"
           }
-        ]
-      },
-      {
-        "page_num": 1,
-        "base_uri": "templates/magical-princess-story/pages/page_01_base.jpg",
-        "text_layers": [
-          {
-            "text_template": "Сказка “{child_name} и фонарик доброты” о том, что добро — это не великие подвиги, а маленькие поступки, которые делают жизнь вокруг чуть лучше.\nОна учит замечать чужие трудности и не проходить мимо, даже если помощь кажется пустяковой.\nПоказывает, что забота о других делает человека светлее и счастливее изнутри.\nУ каждого есть свой «фонарик доброты», и он загорается, когда мы выбираем быть внимательными и добрыми к людям рядом.",
-            "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
-            "style": {
-              "text_align": "center"
-            }
+        }
+      ],
+      "needs_face_swap": false
+    },
+    {
+      "page_num": 2,
+      "base_uri": "templates/magical-princess-story/pages/page_02_base.jpg",
+      "text_layers": [
+        {
+          "text_template": "Вечером, как всегда, {child_name} лежала в своей постели, а мама читала ей сказку перед сном. Про смелых героев, которые совершают добрые поступки и делают мир лучше. «Добро всегда побеждает.» - говорилось в книжке.\nЗасыпая, {child_name} задумалась: а как это — делать добро?",
+          "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
+          "style": {
+            "box_w": 1831,
+            "box_h": 1784,
+            "top": 691,
+            "margin_left": -36
           }
-        ],
-        "needs_face_swap": false
-      },
-      {
-        "page_num": 2,
-        "base_uri": "templates/magical-princess-story/pages/page_02_base.jpg",
-        "text_layers": [
-          {
-            "text_template": "Вечером, как всегда, {child_name} лежала в своей постели, а мама читала ей сказку перед сном. Про смелых героев, которые совершают добрые поступки и делают мир лучше. «Добро всегда побеждает.» - говорилось в книжке.\nЗасыпая, {child_name} задумалась: а как это — делать добро?",
-            "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
-            "style": {
-              "box_w": 1831,
-              "box_h": 1784,
-              "top": 691,
-              "margin_left": -36
-            }
+        }
+      ],
+      "needs_face_swap": true
+    },
+    {
+      "page_num": 3,
+      "base_uri": "templates/magical-princess-story/pages/page_03_base.jpg",
+      "needs_face_swap": false
+    },
+    {
+      "page_num": 4,
+      "base_uri": "templates/magical-princess-story/pages/page_04_base.jpg",
+      "text_layers": [
+        {
+          "text_template": "Утром {child_name} за завтраком спросила маму:\n— Мам, расскажи, что значит делать добро?\n— Это значит сделать что-то полезное и хорошее, помочь кому-то. Добро — как фонарик:где оно есть, там светлее — мягко ответила мама. — Смотри вокруг внимательно, и ты всё поймёшь.",
+          "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
+          "style": {
+            "box_w": 1891,
+            "box_h": 1784,
+            "top": 781,
+            "margin_left": -36
           }
-        ],
-        "needs_face_swap": true
-      },
-      {
-        "page_num": 3,
-        "base_uri": "templates/magical-princess-story/pages/page_03_base.jpg",
-        "needs_face_swap": true
-      },
-      {
-        "page_num": 4,
-        "base_uri": "templates/magical-princess-story/pages/page_04_base.jpg",
-        "text_layers": [
-          {
-            "text_template": "Утром {child_name} за завтраком спросила маму:\n— Мам, расскажи, что значит делать добро?\n— Это значит сделать что-то полезное и хорошее, помочь кому-то. Добро — как фонарик:где оно есть, там светлее — мягко ответила мама. — Смотри вокруг внимательно, и ты всё поймёшь.",
-            "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
-            "style": {
-              "box_w": 1891,
-              "box_h": 1784,
-              "top": 781,
-              "margin_left": -36
-            }
+        }
+      ],
+      "needs_face_swap": true
+    },
+    {
+      "page_num": 5,
+      "base_uri": "templates/magical-princess-story/pages/page_05_base.jpg",
+      "needs_face_swap": false
+    },
+    {
+      "page_num": 6,
+      "base_uri": "templates/magical-princess-story/pages/page_06_base.jpg",
+      "text_layers": [
+        {
+          "text_template": "{child_name} вышла во двор. Солнце грело качели, по лужам прыгали воробьи. Девочка шла по дорожке \nи оглядывалась по сторонам: ни драконов,\nни рыцарей, ни волшебников — только обычный двор.\n\nУ детской площадки стоял Гоша и грустно смотрел\nна свой шлем, он никак не мог застегнуть его.",
+          "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
+          "style": {
+            "box_w": 1851,
+            "box_h": 1784,
+            "top": 811,
+            "margin_left": -36
           }
-        ],
-        "needs_face_swap": true
-      },
-      {
-        "page_num": 5,
-        "base_uri": "templates/magical-princess-story/pages/page_05_base.jpg",
-        "needs_face_swap": true
-      },
-      {
-        "page_num": 6,
-        "base_uri": "templates/magical-princess-story/pages/page_06_base.jpg",
-        "text_layers": [
-          {
-            "text_template": "{child_name} вышла во двор. Солнце грело качели, по лужам прыгали воробьи. Девочка шла по дорожке \nи оглядывалась по сторонам: ни драконов,\nни рыцарей, ни волшебников — только обычный двор.\n\nУ детской площадки стоял Гоша и грустно смотрел\nна свой шлем, он никак не мог застегнуть его.",
-            "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
-            "style": {
-              "box_w": 1851,
-              "box_h": 1784,
-              "top": 811,
-              "margin_left": -36
-            }
+        }
+      ],
+      "needs_face_swap": true
+    },
+    {
+      "page_num": 7,
+      "base_uri": "templates/magical-princess-story/pages/page_07_base.jpg",
+      "needs_face_swap": true
+    },
+    {
+      "page_num": 8,
+      "base_uri": "templates/magical-princess-story/pages/page_08_base.jpg",
+      "text_layers": [
+        {
+          "text_template": "— Давай я подержу, а ты проденешь, — предложила {child_name}.\nОни щёлкнули застёжку вместе.",
+          "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
+          "style": {
+            "box_w": 950,
+            "box_h": 1784,
+            "top": 1591,
+            "margin_left": 1036
           }
-        ],
-        "needs_face_swap": false
-      },
-      {
-        "page_num": 7,
-        "base_uri": "templates/magical-princess-story/pages/page_07_base.jpg",
-        "needs_face_swap": true
-      },
-      {
-        "page_num": 8,
-        "base_uri": "templates/magical-princess-story/pages/page_08_base.jpg",
-        "text_layers": [
-          {
-            "text_template": "— Давай я подержу, а ты проденешь, — предложила {child_name}.\nОни щёлкнули застёжку вместе.",
-            "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
-            "style": {
-              "box_w": 950,
-              "box_h": 1784,
-              "top": 1591,
-              "margin_left": 1036
-            }
+        }
+      ],
+      "needs_face_swap": false
+    },
+    {
+      "page_num": 9,
+      "base_uri": "templates/magical-princess-story/pages/page_09_base.jpg",
+      "text_layers": [
+        {
+          "text_template": "— Спасибо! — крикнул Гоша, подал девочке «пять»\n и помчался по дорожке,\nкак ветер.",
+          "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
+          "style": {
+            "box_w": 1050,
+            "box_h": 1784,
+            "top": 751,
+            "margin_left": -1036
           }
-        ],
-        "needs_face_swap": true
-      },
-      {
-        "page_num": 9,
-        "base_uri": "templates/magical-princess-story/pages/page_09_base.jpg",
-        "text_layers": [
-          {
-            "text_template": "— Спасибо! — крикнул Гоша, подал девочке «пять»\n и помчался по дорожке,\nкак ветер.",
-            "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
-            "style": {
-              "box_w": 1050,
-              "box_h": 1784,
-              "top": 751,
-              "margin_left": -1036
-            }
+        }
+      ],
+      "needs_face_swap": false
+    },
+    {
+      "page_num": 10,
+      "base_uri": "templates/magical-princess-story/pages/page_10_base.jpg",
+      "text_layers": [
+        {
+          "text_template": "{child_name} пошла дальше и заметила на дорожке толстую палку — как раз там, где ездят велосипедисты.\nДевочка представила себя на велосипеде и подумала, что ей бы очень не хотелось наехать на такое препятствие, ведь его можно не заметить и упасть с велосипеда, а это бывает крайне неприятно.\n\n{child_name} стащила палку в сторону и положила у клумбы, чтобы никто не споткнулся.",
+          "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
+          "style": {
+            "box_w": 1931,
+            "box_h": 1784,
+            "top": 701,
+            "margin_left": -36
           }
-        ],
-        "needs_face_swap": true
-      },
-      {
-        "page_num": 10,
-        "base_uri": "templates/magical-princess-story/pages/page_10_base.jpg",
-        "text_layers": [
-          {
-            "text_template": "{child_name} пошла дальше и заметила на дорожке толстую палку — как раз там, где ездят велосипедисты.\nДевочка представила себя на велосипеде и подумала, что ей бы очень не хотелось наехать на такое препятствие, ведь его можно не заметить и упасть с велосипеда, а это бывает крайне неприятно.\n\n{child_name} стащила палку в сторону и положила у клумбы, чтобы никто не споткнулся.",
-            "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
-            "style": {
-              "box_w": 1931,
-              "box_h": 1784,
-              "top": 701,
-              "margin_left": -36
-            }
+        }
+      ],
+      "needs_face_swap": true
+    },
+    {
+      "page_num": 11,
+      "base_uri": "templates/magical-princess-story/pages/page_11_base.jpg",
+      "needs_face_swap": true
+    },
+    {
+      "page_num": 12,
+      "base_uri": "templates/magical-princess-story/pages/page_12_base.jpg",
+      "needs_face_swap": false
+    },
+    {
+      "page_num": 13,
+      "base_uri": "templates/magical-princess-story/pages/page_13_base.jpg",
+      "text_layers": [
+        {
+          "text_template": "Возле песочницы сидела малышка Лида и едва не плакала.\n— Что случилось? Тебя кто-то обидел? — спросила {child_name}.\n— Я потеряла свою любимую розовую лопатку, — грустно ответила Лида.\n— Давай искать вместе, — сказала {child_name}.",
+          "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
+          "style": {
+            "box_w": 1831,
+            "box_h": 1784,
+            "top": 621,
+            "margin_left": -36
           }
-        ],
-        "needs_face_swap": true
-      },
-      {
-        "page_num": 11,
-        "base_uri": "templates/magical-princess-story/pages/page_11_base.jpg",
-        "needs_face_swap": true
-      },
-      {
-        "page_num": 12,
-        "base_uri": "templates/magical-princess-story/pages/page_12_base.jpg",
-        "needs_face_swap": true
-      },
-      {
-        "page_num": 13,
-        "base_uri": "templates/magical-princess-story/pages/page_13_base.jpg",
-        "text_layers": [
-          {
-            "text_template": "Возле песочницы сидела малышка Лида и едва не плакала.\n— Что случилось? Тебя кто-то обидел? — спросила {child_name}.\n— Я потеряла свою любимую розовую лопатку, — грустно ответила Лида.\n— Давай искать вместе, — сказала {child_name}.",
-            "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
-            "style": {
-              "box_w": 1831,
-              "box_h": 1784,
-              "top": 621,
-              "margin_left": -36
-            }
+        }
+      ],
+      "needs_face_swap": false
+    },
+    {
+      "page_num": 14,
+      "base_uri": "templates/magical-princess-story/pages/page_14_base.jpg",
+      "text_layers": [
+        {
+          "text_template": "Они внимательно осматривали песочницу, переворачивали все формочки, и вдруг {child_name} заметила, что под лежащим у края песочницы ведёрком торчала розовая ручка. ",
+          "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
+          "style": {
+            "box_w": 1611,
+            "box_h": 1784,
+            "top": 401,
+            "margin_left": -36
           }
-        ],
-        "needs_face_swap": false
-      },
-      {
-        "page_num": 14,
-        "base_uri": "templates/magical-princess-story/pages/page_14_base.jpg",
-        "text_layers": [
-          {
-            "text_template": "Они внимательно осматривали песочницу, переворачивали все формочки, и вдруг {child_name} заметила, что под лежащим у края песочницы ведёрком торчала розовая ручка. ",
-            "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
-            "style": {
-              "box_w": 1611,
-              "box_h": 1784,
-              "top": 401,
-              "margin_left": -36
-            }
+        }
+      ],
+      "needs_face_swap": true
+    },
+    {
+      "page_num": 15,
+      "base_uri": "templates/magical-princess-story/pages/page_15_base.jpg",
+      "text_layers": [
+        {
+          "text_template": "{child_name} протянула ведёрко, а малышка Лида сразу обрадовалась, увидев любимую лопатку, и прижала её к себе:\n— Большое спасибо!",
+          "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
+          "style": {
+            "box_w": 1831,
+            "box_h": 1784,
+            "top": 1451,
+            "margin_left": -36
           }
-        ],
-        "needs_face_swap": true
-      },
-      {
-        "page_num": 15,
-        "base_uri": "templates/magical-princess-story/pages/page_15_base.jpg",
-        "text_layers": [
-          {
-            "text_template": "{child_name} протянула ведёрко, а малышка Лида сразу обрадовалась, увидев любимую лопатку, и прижала её к себе:\n— Большое спасибо!",
-            "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
-            "style": {
-              "box_w": 1831,
-              "box_h": 1784,
-              "top": 1451,
-              "margin_left": -36
-            }
+        }
+      ],
+      "needs_face_swap": false
+    },
+    {
+      "page_num": 16,
+      "base_uri": "templates/magical-princess-story/pages/page_16_base.jpg",
+      "text_layers": [
+        {
+          "text_template": "У подъезда молодая мама пыталась протиснуть коляску с малышом через входную дверь, которая так и норовила закрыться и задеть коляску.",
+          "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
+          "style": {
+            "box_w": 1831,
+            "box_h": 1784,
+            "top": 951,
+            "margin_left": -36
           }
-        ],
-        "needs_face_swap": true
-      },
-      {
-        "page_num": 16,
-        "base_uri": "templates/magical-princess-story/pages/page_16_base.jpg",
-        "text_layers": [
-          {
-            "text_template": "У подъезда молодая мама пыталась протиснуть коляску с малышом через входную дверь, которая так и норовила закрыться и задеть коляску.",
-            "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
-            "style": {
-              "box_w": 1831,
-              "box_h": 1784,
-              "top": 951,
-              "margin_left": -36
-            }
+        }
+      ],
+      "needs_face_swap": true
+    },
+    {
+      "page_num": 17,
+      "base_uri": "templates/magical-princess-story/pages/page_17_base.jpg",
+      "needs_face_swap": true
+    },
+    {
+      "page_num": 18,
+      "base_uri": "templates/magical-princess-story/pages/page_18_base.jpg",
+      "needs_face_swap": false
+    },
+    {
+      "page_num": 19,
+      "base_uri": "templates/magical-princess-story/pages/page_19_base.jpg",
+      "text_layers": [
+        {
+          "text_template": "— Я подержу, — сказала {child_name} и прижала дверь плечом. Мама малыша сказала:\n— Какая ты молодец!",
+          "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
+          "style": {
+            "box_w": 1831,
+            "box_h": 1784,
+            "top": 1151,
+            "margin_left": -36,
+            "color": "#95702f",
+            "shadow_opacity": 0.0
           }
-        ],
-        "needs_face_swap": true
-      },
-      {
-        "page_num": 17,
-        "base_uri": "templates/magical-princess-story/pages/page_17_base.jpg",
-        "needs_face_swap": true
-      },
-      {
-        "page_num": 18,
-        "base_uri": "templates/magical-princess-story/pages/page_18_base.jpg",
-        "needs_face_swap": true
-      },
-      {
-        "page_num": 19,
-        "base_uri": "templates/magical-princess-story/pages/page_19_base.jpg",
-        "text_layers": [
-          {
-            "text_template": "— Я подержу, — сказала {child_name} и прижала дверь плечом. Мама малыша сказала:\n— Какая ты молодец!",
-            "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
-            "style": {
-              "box_w": 1831,
-              "box_h": 1784,
-              "top": 1151,
-              "margin_left": -36,
-              "color": "#95702f",
-              "shadow_opacity": 0.0
-            }
+        }
+      ],
+      "needs_face_swap": false
+    },
+    {
+      "page_num": 20,
+      "base_uri": "templates/magical-princess-story/pages/page_20_base.jpg",
+      "text_layers": [
+        {
+          "text_template": "{child_name} ещё прошлась по двору. Она не встретила никаких драконов, но на душе было светло-светло, будто её фонарик светил сам по себе.",
+          "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
+          "style": {
+            "box_w": 1831,
+            "box_h": 1784,
+            "top": 821,
+            "margin_left": -36
           }
-        ],
-        "needs_face_swap": false
-      },
-      {
-        "page_num": 20,
-        "base_uri": "templates/magical-princess-story/pages/page_20_base.jpg",
-        "text_layers": [
-          {
-            "text_template": "{child_name} ещё прошлась по двору. Она не встретила никаких драконов, но на душе было светло-светло, будто её фонарик светил сам по себе.",
-            "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
-            "style": {
-              "box_w": 1831,
-              "box_h": 1784,
-              "top": 821,
-              "margin_left": -36
-            }
+        }
+      ],
+      "needs_face_swap": true
+    },
+    {
+      "page_num": 21,
+      "base_uri": "templates/magical-princess-story/pages/page_21_base.jpg",
+      "needs_face_swap": false
+    },
+    {
+      "page_num": 22,
+      "base_uri": "templates/magical-princess-story/pages/page_22_base.jpg",
+      "text_layers": [
+        {
+          "text_template": "Вечером мама спросила:\n— Ну как твой фонарик? Удалось совершить доброе дело?\n— Нет — задумалась {child_name}. — Никаких особенных добрых дел не получилось, я просто помогла Гоше застегнуть шлем, перетащила палку подальше от велосипедной дорожки, нашла Лидину лопатку, помогла маме с коляской войти в подъезд, Ничаких подвигов.\nМама прижала дочку к плечу:\n— Именно это и есть подвиги. Ты помогла людям рядом, а твой фонарик доброты сегодня светил целый день.\n— Правда? — улыбнулась {child_name}. — Значит, завтра я снова буду смотреть внимательным глазами.",
+          "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
+          "style": {
+            "box_w": 1931,
+            "box_h": 1684,
+            "top": 651,
+            "margin_left": -36
           }
-        ],
-        "needs_face_swap": true
-      },
-      {
-        "page_num": 21,
-        "base_uri": "templates/magical-princess-story/pages/page_21_base.jpg",
-        "needs_face_swap": true
-      },
-      {
-        "page_num": 22,
-        "base_uri": "templates/magical-princess-story/pages/page_22_base.jpg",
-        "text_layers": [
-          {
-            "text_template": "Вечером мама спросила:\n— Ну как твой фонарик? Удалось совершить доброе дело?\n— Нет — задумалась {child_name}. — Никаких особенных добрых дел не получилось, я просто помогла Гоше застегнуть шлем, перетащила палку подальше от велосипедной дорожки, нашла Лидину лопатку, помогла маме с коляской войти в подъезд, Ничаких подвигов.\nМама прижала дочку к плечу:\n— Именно это и есть подвиги. Ты помогла людям рядом, а твой фонарик доброты сегодня светил целый день.\n— Правда? — улыбнулась {child_name}. — Значит, завтра я снова буду смотреть внимательным глазами.",
-            "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
-            "style": {
-              "box_w": 1931,
-              "box_h": 1684,
-              "top": 651,
-              "margin_left": -36
-            }
+        }
+      ],
+      "needs_face_swap": true
+    },
+    {
+      "page_num": 23,
+      "base_uri": "templates/magical-princess-story/pages/page_23_base.jpg",
+      "needs_face_swap": false,
+      "text_layers": [
+        {
+          "text_template": "<span class=\"title-big\">{child_name}</span><br/><span class=\"title-small\">И ФОНАРИК ДОБРОТЫ</span>",
+          "font_uri": "templates/magical-princess-story/fonts/ofont.ru_To Japan.ttf",
+          "style": {
+            "text_align": "center",
+            "allow_title_html": true,
+            "font_family": "CustomFont, 'ofont.ru_To Japan', serif",
+            "font_size": 110,
+            "font_weight": 500,
+            "color": "#ab5792",
+            "stroke_width": 5,
+            "stroke_color": "#ffffff",
+            "shadow_color": "0,0,0",
+            "shadow_opacity": 0.75,
+            "shadow_offset": 4,
+            "shadow_blur": [
+              0,
+              8,
+              16,
+              24,
+              32,
+              40
+            ],
+            "box_w": 1831,
+            "box_h": 1784,
+            "top": 700,
+            "margin_left": -36,
+            "title_big_size": 180,
+            "title_small_size": 100,
+            "white_space": "pre-line"
           }
-        ],
-        "needs_face_swap": false
-      },
-      {
-        "page_num": 23,
-        "base_uri": "templates/magical-princess-story/pages/page_23_base.jpg",
-        "needs_face_swap": true
-      }
-    ]
-  }
+        }
+      ]
+    },
+    {
+      "page_num": 24,
+      "base_uri": "templates/magical-princess-story/pages/page_24_base.jpg",
+      "text_layers": [
+        {
+          "text_template": "Сказка “{child_name} и фонарик доброты” о том, что добро — это не великие подвиги, а маленькие поступки, которые делают жизнь вокруг чуть лучше.\nОна учит замечать чужие трудности и не проходить мимо, даже если помощь кажется пустяковой.\nПоказывает, что забота о других делает человека светлее и счастливее изнутри.\nУ каждого есть свой «фонарик доброты», и он загорается, когда мы выбираем быть внимательными и добрыми к людям рядом.",
+          "font_uri": "templates/magical-princess-story/fonts/comic-sans-ms.ttf",
+          "style": {
+            "text_align": "center"
+          }
+        }
+      ],
+      "needs_face_swap": false
+    }
+  ]
+}

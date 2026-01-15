@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth import User, get_current_user_optional
 from ..book.manifest_store import load_manifest
-from ..book.stages import page_nums_for_stage, stage_has_face_swap
+from ..book.stages import page_nums_for_front_preview, page_nums_for_stage, stage_has_face_swap
 from ..config import settings
 from ..db import get_db
 from ..exceptions import InvalidJobStateError, JobNotFoundError, S3StorageError
@@ -107,6 +107,10 @@ def _presigned_get(uri: str, expires: int = 3600) -> str:
     )
 
 
+def _layout_page_key(job_id: str, page_num: int) -> str:
+    return f"layout/{job_id}/pages/page_{page_num:02d}.png"
+
+
 def _is_thumbnail_uri(uri: Optional[str]) -> bool:
     return bool(uri and "/thumbnails/" in uri)
 
@@ -130,13 +134,11 @@ async def _get_preview_for_job(job: Job, db: AsyncSession) -> Optional[PreviewRe
     try:
         stage = "prepay" if job.status in ["prepay_ready", "confirmed", "postpay_generating"] else "postpay"
         manifest = load_manifest(job.slug)
-        page_nums = page_nums_for_stage(manifest, stage)
+        page_nums = page_nums_for_front_preview(manifest, stage)
         pages = [
             PreviewPage(
                 index=pn,
-                imageUrl=_presigned_get(
-                    f"s3://{settings.S3_BUCKET_NAME}/layout/{job.job_id}/pages/page_{pn:02d}.png"
-                ),
+                imageUrl=_presigned_get(f"s3://{settings.S3_BUCKET_NAME}/{_layout_page_key(job.job_id, pn)}"),
                 locked=False,
                 caption=None,
             )
@@ -280,11 +282,11 @@ async def get_personalization_preview_stage(
             raise InvalidJobStateError(job_id, job.status, "completed")
 
     manifest = load_manifest(job.slug)
-    page_nums = page_nums_for_stage(manifest, stage)
+    page_nums = page_nums_for_front_preview(manifest, stage)
     pages = [
         PreviewPage(
             index=pn,
-            imageUrl=_presigned_get(f"s3://{settings.S3_BUCKET_NAME}/layout/{job_id}/pages/page_{pn:02d}.png"),
+            imageUrl=_presigned_get(f"s3://{settings.S3_BUCKET_NAME}/{_layout_page_key(job.job_id, pn)}"),
             locked=False,
             caption=None,
         )
@@ -398,7 +400,7 @@ from ..tasks import analyze_photo_task, build_stage_backgrounds_task, render_sta
 from ..logger import logger
 from ..exceptions import JobNotFoundError, InvalidJobStateError, S3StorageError
 from ..book.manifest_store import load_manifest
-from ..book.stages import page_nums_for_stage, stage_has_face_swap
+from ..book.stages import page_nums_for_front_preview, page_nums_for_stage, stage_has_face_swap
 from PIL import Image
 
 router = APIRouter(tags=["Personalizations"])
@@ -846,7 +848,7 @@ def _extract_ill_id_from_uri(uri: str) -> Optional[str]:
 
 async def _get_preview_for_job(job: Job, db: AsyncSession) -> Optional[PreviewResponse]:
     """Get preview response for a personalization job"""
-    # New staged flow: prepay_ready should also expose preview (first 2 pages, e.g. page_00 + page_01)
+    # New staged flow: prepay_ready should also expose preview (first and last front-visible pages).
     if job.status not in ["preview_ready", "confirmed", "completed", "prepay_ready"]:
         return None
 
@@ -855,11 +857,11 @@ async def _get_preview_for_job(job: Job, db: AsyncSession) -> Optional[PreviewRe
     try:
         stage = "prepay" if job.status == "prepay_ready" else "postpay"
         manifest = load_manifest(job.slug)
-        page_nums = page_nums_for_stage(manifest, stage)
+        page_nums = page_nums_for_front_preview(manifest, stage)
         pages = [
             PreviewPage(
                 index=pn,
-                imageUrl=_presigned_get(f"s3://{settings.S3_BUCKET_NAME}/layout/{job.job_id}/pages/page_{pn:02d}.png"),
+                imageUrl=_presigned_get(f"s3://{settings.S3_BUCKET_NAME}/{_layout_page_key(job.job_id, pn)}"),
                 locked=False,
                 caption=None,
             )
@@ -1044,7 +1046,7 @@ async def get_personalization_preview(
         raise JobNotFoundError(job_id)
     
     # New staged flow:
-    # - prepay: first 2 pages from manifest (e.g. page_00 + page_01)
+    # - prepay: first and last front-visible pages from manifest
     # - postpay: full set (manifest-driven)
     if job.status not in ["preview_ready", "confirmed", "completed", "prepay_ready"]:
         raise InvalidJobStateError(job_id, job.status, "prepay_ready, preview_ready, confirmed, or completed")
@@ -1053,11 +1055,11 @@ async def get_personalization_preview(
     try:
         stage = "prepay" if job.status == "prepay_ready" else "postpay"
         manifest = load_manifest(job.slug)
-        page_nums = page_nums_for_stage(manifest, stage)
+        page_nums = page_nums_for_front_preview(manifest, stage)
         pages = [
             PreviewPage(
                 index=pn,
-                imageUrl=_presigned_get(f"s3://{settings.S3_BUCKET_NAME}/layout/{job_id}/pages/page_{pn:02d}.png"),
+                imageUrl=_presigned_get(f"s3://{settings.S3_BUCKET_NAME}/{_layout_page_key(job.job_id, pn)}"),
                 locked=False,
                 caption=None,
             )
@@ -1136,7 +1138,7 @@ async def get_personalization_preview_stage(
     """
     Manifest-driven preview endpoint.
 
-    - stage=prepay: returns first 2 pages (from manifest)
+    - stage=prepay: returns first and last front-visible pages (from manifest)
     - stage=postpay: returns all pages allowed by manifest (requires job completed)
     """
     result = await db.execute(select(Job).filter(Job.job_id == job_id))
@@ -1162,11 +1164,11 @@ async def get_personalization_preview_stage(
             raise InvalidJobStateError(job_id, job.status, "completed")
 
     manifest = load_manifest(job.slug)
-    page_nums = page_nums_for_stage(manifest, stage)
+    page_nums = page_nums_for_front_preview(manifest, stage)
     pages = [
         PreviewPage(
             index=pn,
-            imageUrl=_presigned_get(f"s3://{settings.S3_BUCKET_NAME}/layout/{job_id}/pages/page_{pn:02d}.png"),
+            imageUrl=_presigned_get(f"s3://{settings.S3_BUCKET_NAME}/{_layout_page_key(job.job_id, pn)}"),
             locked=False,
             caption=None,
         )
@@ -1255,7 +1257,7 @@ async def confirm_personalization_generate(
     if not job:
         raise JobNotFoundError(job_id)
     
-    # In the new flow, /generate triggers PREPAY generation (first 2 pages, starting from 0 if manifest is 0-based).
+    # In the new flow, /generate triggers PREPAY generation (first and last front-visible pages).
     if job.status not in ["preview_ready", "analyzing_completed", "prepay_ready"]:
         raise InvalidJobStateError(job_id, job.status, "preview_ready, analyzing_completed, or prepay_ready")
     
@@ -1277,7 +1279,7 @@ async def confirm_personalization_generate(
     job.child_name = child_name
     job.child_age = child_age
 
-    # Kick off PREPAY generation (first 2 pages) after user confirmed
+    # Kick off PREPAY generation (first and last front-visible pages) after user confirmed
     job.status = "prepay_pending"
     await db.commit()
     await db.refresh(job)
