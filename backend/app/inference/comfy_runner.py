@@ -94,6 +94,19 @@ def build_comfy_workflow(
         except Exception:
             pass
 
+        # IMPORTANT:
+        # Our `workflow.json` ships with default non-empty prompt strings.
+        # We must override them, otherwise the user's prompt never reaches ComfyUI.
+        if "6" in prompt_dict and isinstance(prompt_dict.get("6"), dict):
+            node = prompt_dict["6"]
+            if node.get("class_type") == "CLIPTextEncode":
+                node.setdefault("inputs", {})["text"] = prompt
+        if "19" in prompt_dict and isinstance(prompt_dict.get("19"), dict):
+            node = prompt_dict["19"]
+            if node.get("class_type") == "CLIPTextEncode":
+                node.setdefault("inputs", {})["text"] = negative_prompt
+
+        # Fallback: if the workflow does not follow our node ids, at least fill empty prompts.
         for node in prompt_dict.values():
             if isinstance(node, dict) and node.get("class_type") == "CLIPTextEncode":
                 inputs = node.setdefault("inputs", {})
@@ -310,6 +323,38 @@ def build_comfy_workflow(
         if node_type == "ImageUpscaleWithModelBatched":
             if "per_batch" not in inputs:
                 inputs["per_batch"] = widgets[0] if len(widgets) > 0 else 1
+
+    return prompt_dict
+
+def build_face_crop_workflow(child_photo_filename: str) -> dict:
+    """
+    Build a minimal ComfyUI workflow that detects a face and returns a cropped face image.
+
+    This is used in the *analysis* step so the user can immediately see what will be used
+    for generation, and so the generation pipeline can skip face detection/cropping.
+    """
+    base_dir = os.path.dirname(__file__)
+    workflow_path = os.path.join(base_dir, "workflow_face_crop.json")
+    try:
+        with open(workflow_path, "r", encoding="utf-8") as f:
+            prompt_dict = json.load(f)
+    except FileNotFoundError:
+        logger.error(f"Workflow file not found: {workflow_path}")
+        raise RuntimeError(f"Workflow file not found: {workflow_path}")
+    except json.JSONDecodeError as e:
+        logger.error(f"Invalid JSON in workflow file: {e}")
+        raise RuntimeError(f"Invalid JSON in workflow file: {e}")
+
+    # Our crop workflow uses node "64" for LoadImage (kept consistent with the main workflow).
+    node_64 = prompt_dict.get("64")
+    if isinstance(node_64, dict) and node_64.get("class_type") == "LoadImage":
+        node_64.setdefault("inputs", {})["image"] = child_photo_filename
+    else:
+        # Best-effort fallback: replace the first LoadImage node.
+        for node in prompt_dict.values():
+            if isinstance(node, dict) and node.get("class_type") == "LoadImage":
+                node.setdefault("inputs", {})["image"] = child_photo_filename
+                break
 
     return prompt_dict
 
@@ -619,6 +664,24 @@ def run_face_transfer_comfy_api(
     
     logger.info(f"Face transfer completed successfully")
     return result_img
+
+def run_face_crop_comfy_api(child_pil: Image.Image, seed: Optional[int] = None) -> Image.Image:
+    """
+    Detect face and crop it using ComfyUI REST API.
+
+    Returns a cropped face image (usually square).
+    """
+    server_address = settings.COMFY_BASE_URL
+    logger.info(f"Starting face crop with ComfyUI: {server_address}")
+
+    child_filename = f"child_{uuid.uuid4().hex}.png"
+    child_uploaded = upload_image_to_comfy(child_pil.convert("RGB"), child_filename, server_address)
+
+    # `workflow_face_crop.json` does not currently use seed, but we accept it for forward compatibility.
+    _ = seed
+    workflow = build_face_crop_workflow(child_uploaded)
+    prompt_id = queue_prompt(workflow, server_address)
+    return get_image_result(prompt_id, server_address, timeout=120)
 
 def run_face_transfer_local(
     child_pil: Image.Image,

@@ -43,6 +43,18 @@ from ..services.order_status import compute_order_status
 
 router = APIRouter(tags=["Orders"])
 
+def _get_job_avatar_url(job: Job) -> Optional[str]:
+    avatar_url = job.avatar_url
+    if not avatar_url and job.child_photo_uri:
+        try:
+            # Reuse the same presigned-url logic as other routes (catalog/personalizations).
+            from ..routes.catalog import _presigned_get
+
+            avatar_url = _presigned_get(job.child_photo_uri)
+        except Exception:
+            avatar_url = None
+    return avatar_url
+
 
 def _generate_order_number() -> str:
     import random
@@ -147,6 +159,7 @@ async def create_order(
 
         pers_result = await db.execute(select(Job).filter(Job.job_id == cart_item.personalization_id))
         personalization = pers_result.scalar_one()
+        avatar_url = _get_job_avatar_url(personalization)
 
         order_item = OrderItemModel(
             id=str(uuid.uuid4()),
@@ -176,6 +189,7 @@ async def create_order(
                 "personalization_id": order_item.personalization_id,
                 "child_name": order_item.child_name,
                 "child_age": order_item.child_age,
+                "avatar_url": avatar_url,
             }
         )
 
@@ -195,7 +209,7 @@ async def create_order(
                 pers_id = payload["personalization_id"]
                 manifest = load_manifest(payload["slug"])
                 if stage_has_face_swap(manifest, "postpay"):
-                    build_stage_backgrounds_task.apply_async(args=(pers_id, "postpay"), queue="gpu")
+                    build_stage_backgrounds_task.apply_async(args=(pers_id, "postpay"), queue="gpu_postpay")
                 else:
                     render_stage_pages_task.apply_async(args=(pers_id, "postpay"), queue="render")
         except Exception as e:
@@ -227,6 +241,7 @@ async def create_order(
                 personalization=CartPersonalizationSummary(
                     childName=normalize_child_name(payload["child_name"]),
                     childAge=payload["child_age"],
+                    avatarUrl=payload.get("avatar_url"),
                 ),
             )
         )
@@ -269,7 +284,7 @@ async def mark_order_paid(
     for oi in order_items:
         manifest = load_manifest(oi.slug)
         if stage_has_face_swap(manifest, "postpay"):
-            build_stage_backgrounds_task.apply_async(args=(oi.personalization_id, "postpay"), queue="gpu")
+            build_stage_backgrounds_task.apply_async(args=(oi.personalization_id, "postpay"), queue="gpu_postpay")
         else:
             render_stage_pages_task.apply_async(args=(oi.personalization_id, "postpay"), queue="render")
 
@@ -366,7 +381,11 @@ async def get_order(
                 quantity=oi.quantity,
                 unitPrice=Money(amount=oi.unit_price_amount, currency=oi.unit_price_currency),
                 lineTotal=Money(amount=oi.line_total_amount, currency=oi.line_total_currency),
-                personalization=CartPersonalizationSummary(childName=pers.child_name, childAge=pers.child_age),
+                personalization=CartPersonalizationSummary(
+                    childName=pers.child_name,
+                    childAge=pers.child_age,
+                    avatarUrl=_get_job_avatar_url(pers),
+                ),
             )
         )
 

@@ -149,6 +149,10 @@ class PreviewResponse(BaseModel):
     unlockedCount: int
     totalCount: int
 
+class PageFaceSwapCheckResponse(BaseModel):
+    pageNum: int
+    needsFaceSwap: bool
+
 # ===== Personalization Schemas =====
 
 class PersonalizationStatus(str, Enum):
@@ -165,6 +169,14 @@ class GenerationRetry(BaseModel):
     remaining: int
     allowed: bool
 
+class PageRegeneration(BaseModel):
+    pageNum: int
+    stage: str
+    status: str
+    startedAt: datetime
+    updatedAt: datetime
+    error: Optional[str] = None
+
 class Personalization(BaseModel):
     id: str
     slug: str
@@ -175,9 +187,11 @@ class Personalization(BaseModel):
     updatedAt: datetime
     previewReadyAt: Optional[datetime] = None
     avatarUrl: Optional[str] = None
+    avatarCropUrl: Optional[str] = None
     preview: Optional[PreviewResponse] = None
     cartItemId: Optional[str] = None
     generationRetry: Optional[GenerationRetry] = None
+    pageRegenerations: Optional[List[PageRegeneration]] = None
 
 class AvatarUploadResponse(BaseModel):
     uploadId: str
@@ -188,6 +202,7 @@ class AvatarUploadResponse(BaseModel):
 class CartPersonalizationSummary(BaseModel):
     childName: str
     childAge: int
+    avatarUrl: Optional[str] = None
 
 class CartItemInput(BaseModel):
     personalizationId: str

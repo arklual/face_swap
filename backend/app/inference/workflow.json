@@ -276,7 +276,7 @@
         1
       ],
       "image": [
-        "117",
+        "64",
         0
       ],
       "attn_mask": [
@@ -330,20 +330,6 @@
     "class_type": "ImageHistogramMatch+",
     "_meta": {
       "title": "🔧 Image Histogram Match"
-    }
-  },
-  "117": {
-    "inputs": {
-      "crop_padding_factor": 0.1,
-      "cascade_xml": "haarcascade_frontalface_alt2.xml",
-      "image": [
-        "64",
-        0
-      ]
-    },
-    "class_type": "Image Crop Face",
-    "_meta": {
-      "title": "Image Crop Face"
     }
   },
   "136": {

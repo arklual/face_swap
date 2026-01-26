@@ -4,6 +4,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
+from .prompts import join_prompt_parts
+
 
 class Availability(BaseModel):
     """
@@ -65,8 +67,20 @@ class OutputSpec(BaseModel):
 
 class BookManifest(BaseModel):
     slug: str
+    # Book-level positive prompt that should be applied to all face-swap pages.
+    # Must be present in manifest.json for every book.
+    positive_prompt: str = Field(min_length=1)
     pages: List[PageSpec]
     output: OutputSpec = Field(default_factory=OutputSpec)
+
+    @model_validator(mode="after")
+    def _validate_positive_prompt(self) -> "BookManifest":
+        # Ensure it's non-empty after trimming and normalize commas/spaces.
+        normalized = join_prompt_parts([self.positive_prompt])
+        if not normalized:
+            raise ValueError("positive_prompt is required and must be non-empty")
+        self.positive_prompt = normalized
+        return self
 
     def page_by_num(self, page_num: int) -> Optional[PageSpec]:
         for p in self.pages:

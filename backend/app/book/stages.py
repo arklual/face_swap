@@ -18,20 +18,27 @@ def front_visible_page_nums(manifest: BookManifest) -> List[int]:
     return _exclude_front_hidden_pages(nums)
 
 
+def postpay_page_nums(manifest: BookManifest) -> List[int]:
+    nums: List[int] = []
+    seen = set()
+    for page in manifest.pages:
+        if not page.availability.postpay:
+            continue
+        if page.page_num in seen:
+            continue
+        seen.add(page.page_num)
+        nums.append(page.page_num)
+    return nums
+
+
 def prepay_page_nums(manifest: BookManifest) -> List[int]:
-    candidates = front_visible_page_nums(manifest)
-    if not candidates:
-        return []
-    if len(candidates) == 1:
-        return candidates
-    return [candidates[0], candidates[-1]]
-
-
-def _prepay_page_nums(manifest: BookManifest) -> List[int]:
     """
-    Prepay should generate the first and the last front-visible pages of the book.
+    Prepay generates the first spread + next page (3 pages) from front-visible postpay pages.
+    Hidden pages (1, 23) are excluded.
     """
-    return prepay_page_nums(manifest)
+    postpay_nums = postpay_page_nums(manifest)
+    visible_nums = [n for n in postpay_nums if n not in FRONT_HIDDEN_PAGE_NUMS]
+    return visible_nums[:3]
 
 
 def page_nums_for_stage(manifest: BookManifest, stage: Stage) -> List[int]:
@@ -39,18 +46,13 @@ def page_nums_for_stage(manifest: BookManifest, stage: Stage) -> List[int]:
     Resolve the list of page numbers for a stage.
 
     Product requirement:
-    - prepay: first and last front-visible pages from the manifest
-    - postpay: everything else that is allowed for postpay
+    - prepay: first spread + next page (3 pages) from front-visible postpay pages
+    - postpay: everything that is allowed for postpay
     """
     if stage == "prepay":
         return prepay_page_nums(manifest)
 
-    nums: List[int] = []
-    for p in manifest.pages:
-        if not p.availability.postpay:
-            continue
-        nums.append(p.page_num)
-    return sorted(set(nums))
+    return postpay_page_nums(manifest)
 
 
 def page_nums_for_front_preview(manifest: BookManifest, stage: Stage) -> List[int]:

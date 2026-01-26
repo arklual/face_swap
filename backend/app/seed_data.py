@@ -4,14 +4,14 @@ Seed database with sample data for testing
 import asyncio
 import argparse
 from uuid import uuid4
-from typing import Tuple
+from typing import Tuple, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from .db import engine
 from .models import Base, Book, BookPreview
 
 # Public CDN images used for demo seed data.
 # These are intentionally "real" product/marketing images, not internal mock illustration keys.
-DEMO_IMAGE_URLS: list[str] = [
+DEMO_IMAGE_URLS: List[str] = [
     "https://storage.wonderwraps.com/f625aba1-11ef-4c83-a4e0-4acd63772684/responsive-images/O6gYu8CZz0GztoEMFRPmWAVJ4oZ0jN-metaRm9yZ290dGVuIFJvYm90LnBuZw%3D%3D-___media_library_original_600_600.png",
     "https://storage.wonderwraps.com/c9a98b73-57ec-4574-95e6-174a0a6f1c77/responsive-images/hmxC4ET2J65TO9is4yNxuPGhZWwQ3R-metaa2luZGVyZ2FydGVuIGZpbmFsLnBuZw%3D%3D-___media_library_original_600_600.png",
     "https://storage.wonderwraps.com/acbfeb55-1798-48d3-8841-2caaf05ac552/responsive-images/bDvN5yynm7Fe38AA6mPxaeceeHD6ha-metaQ09WRVIucG5n-___media_library_original_600_600.png",
@@ -20,7 +20,7 @@ DEMO_IMAGE_URLS: list[str] = [
     "https://storage.wonderwraps.com/6fbe63dc-48c5-4a13-b6cc-62076f2493ff/responsive-images/PJihL5UxegfMRSNfNj39Dsl1kZ6LS0-metaY292ZXIucG5n-___media_library_original_600_600.png",
 ]
 
-def _resolve_s3_hero_and_gallery(slug: str) -> Tuple[str, list[str]]:
+def _resolve_s3_hero_and_gallery(slug: str) -> Tuple[str, List[str]]:
     """
     Prefer real template assets from S3.
 
@@ -63,13 +63,13 @@ def _resolve_s3_hero_and_gallery(slug: str) -> Tuple[str, list[str]]:
     ]
     return hero_fallback, gallery_fallback
 
-def _story_previews() -> list[dict]:
+def _story_previews() -> List[dict]:
     """
     A small storefront preview (captions) extracted from the provided story text.
     Image URLs are intentionally generic and public.
     """
     preview_image = "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80"
-    pages: list[dict] = [
+    pages: List[dict] = [
         {
             "page_index": 0,
             "caption": (
@@ -118,10 +118,17 @@ def _story_previews() -> list[dict]:
 
 async def seed_books_and_previews() -> None:
     """Seed a single real book used by the storefront."""
-    hero_image, gallery_images = _resolve_s3_hero_and_gallery("magical-princess-story")
+    # For local/demo environments we keep a stable, S3-relative hero image reference.
+    # API will presign it via configured `S3_BUCKET_NAME`.
+    hero_image = "templates/magical-princess-story/cover.png"
+    gallery_images = [
+        hero_image,
+        "templates/magical-princess-story/front_cover.png",
+        "templates/magical-princess-story/back_cover.png",
+    ]
     book_data = {
         "slug": "magical-princess-story",
-        "title": "Алина и фонарик Доброты",
+        "title": "Девочка и фонарик Доброты",
         "subtitle": "Сказка о маленьких добрых поступках",
         "description": (
             "Добро — это не великие подвиги, а маленькие поступки, которые делают жизнь вокруг чуть лучше. "

@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     AWS_ENDPOINT_URL: str
     AWS_ACCESS_KEY_ID: str
     AWS_SECRET_ACCESS_KEY: str
-    AWS_REGION_NAME: str = "ru-1"
+    AWS_REGION_NAME: str = "ru-central1"
     S3_BUCKET_NAME: str
 
     CELERY_BROKER_URL: str = "redis://redis:6379/0"

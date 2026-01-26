@@ -94,6 +94,44 @@ async def test_ensure_pdf_in_s3_missing_generates_and_uploads(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_ensure_print_pdf_in_s3_block_uses_separate_key(monkeypatch):
+    error = ClientError(
+        {
+            "Error": {"Code": "404", "Message": "Not Found"},
+            "ResponseMetadata": {"HTTPStatusCode": 404},
+        },
+        "HeadObject",
+    )
+    dummy_s3 = DummyS3(head_error=error)
+    monkeypatch.setattr(personalizations_module, "s3", dummy_s3)
+
+    def _build_pdf_bytes(_job, _page_nums):
+        return b"print-pdf-bytes"
+
+    monkeypatch.setattr(personalizations_module, "_build_pdf_bytes", _build_pdf_bytes)
+
+    job = make_job()
+    key = await personalizations_module._ensure_print_pdf_in_s3(job, [1, 2], "block")
+
+    assert key == personalizations_module._print_pdf_s3_key(job.job_id, "block")
+    assert len(dummy_s3.put_calls) == 1
+    put_kwargs = dummy_s3.put_calls[0]
+    assert put_kwargs["Key"] == personalizations_module._print_pdf_s3_key(job.job_id, "block")
+
+
+@pytest.mark.asyncio
+async def test_ensure_print_pdf_in_s3_cover_is_not_implemented(monkeypatch):
+    job = make_job()
+    # cover pipeline now exists; in tests we monkeypatch it to avoid heavy deps
+    async def _fake_cover(_job: Job) -> str:
+        return "layout/job-123/print/cover.pdf"
+
+    monkeypatch.setattr(personalizations_module, "_ensure_cover_print_artifacts_in_s3", _fake_cover)
+    key = await personalizations_module._ensure_print_pdf_in_s3(job, [1, 2], "cover")
+    assert key == "layout/job-123/print/cover.pdf"
+
+
+@pytest.mark.asyncio
 async def test_wait_for_s3_object_retries_until_ready(monkeypatch):
     calls = {"count": 0}
 

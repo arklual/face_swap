@@ -1,0 +1,38 @@
+{
+  "64": {
+    "inputs": {
+      "image": "child.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "117": {
+    "inputs": {
+      "crop_padding_factor": 0.1,
+      "cascade_xml": "haarcascade_frontalface_alt2.xml",
+      "image": [
+        "64",
+        0
+      ]
+    },
+    "class_type": "Image Crop Face",
+    "_meta": {
+      "title": "Image Crop Face"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "117",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  }
+}
